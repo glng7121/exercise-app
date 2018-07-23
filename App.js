@@ -14,9 +14,32 @@ let workout_test = [new Set(25, "pushups"),
                     new Set(45, "pushups")];
 
 class Editor extends Component {
-    state = {
-      refs: [],
-    };
+    constructor(props) {
+      super(props);
+      let initialRefs = [];
+      for (let i = 0; i < this.props.workout.length*2; i++) {
+        initialRefs.push(React.createRef());
+      }
+      this.state = { refs: initialRefs };
+      console.log(this.state.refs);
+    }
+
+    handleNextField_wrapper = (index, field) => {
+      return (event) => this.handleNextField(event, index, field);
+    }
+
+    handleNextField = (event, index, field) => {
+      if (event.key !== 'Enter') return;
+      if (field === EXER_FIELD_NAME && (index+1)*2 === this.state.refs.length) {
+        //this.props.addSet();
+        return;
+      }
+      const currRefIndex = field === REPS_FIELD_NAME ? index*2 :
+                        field === EXER_FIELD_NAME ? index*2 + 1 :
+                        null;
+      //console.log(this.state.refs[currRefIndex + 1].current);
+      this.state.refs[currRefIndex + 1].current.select();
+    }
 
     render () {
       return (
@@ -24,9 +47,13 @@ class Editor extends Component {
           {this.props.workout.map((Set, i) => 
             <li key={i}> 
               <input className='reps' type='text' placeholder='#' defaultValue={Set.reps.toString()}
-                    key={`${i}_r`} onChange={this.props.updateWorkout(i, REPS_FIELD_NAME)} />
+                    ref={this.state.refs[i*2]} key={`${i*2}`} 
+                    onChange={this.props.updateWorkout(i, REPS_FIELD_NAME)} 
+                    onKeyPress={this.handleNextField_wrapper(i, REPS_FIELD_NAME)} />
               <input className='exercise' type='text' placeholder='exercise' defaultValue={Set.exercise} 
-                    key={`${i}_e`} onChange={this.props.updateWorkout(i, EXER_FIELD_NAME)} />
+                    ref={this.state.refs[i*2 + 1]} key={`${i*2 + 1}`} 
+                    onChange={this.props.updateWorkout(i, EXER_FIELD_NAME)} 
+                    onKeyPress={this.handleNextField_wrapper(i, EXER_FIELD_NAME)} />
             </li>
           )}
         </ol>
@@ -62,7 +89,7 @@ class App extends Component {
       return;
     }
     this.setState({ currentBaseWorkout: workout });
-    //console.log(this.state.currentBaseWorkout[index]);
+    console.log(this.state.currentBaseWorkout[index]);
   }
 
   render() {
