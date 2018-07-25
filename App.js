@@ -43,16 +43,27 @@ class Editor extends Component {
       return (event) => this.handleNextField(event, index, field);
     }
 
+    addEmptySet = (index) => {
+      //registers a new empty set at index
+      this.props.addEmptySetToBase(index);
+      const refs = this.state.refs; 
+      const repsRef = React.createRef();
+      refs.splice(index*2, 0, repsRef, React.createRef());
+      this.setState({ refs: refs }, () => {
+        repsRef.current.select();
+      });
+    }
+
+    addEmptySet_wrapper = (index) => {
+      return () => {
+        this.addEmptySet(index);
+      }
+    }
+
     handleNextField = (event, index, field) => {
       if (event.key !== 'Enter') return;
       if (field === EXER_FIELD_NAME && (index+1)*2 === this.state.refs.length) {
-        this.props.addEmptySet();
-        const refs = this.state.refs; 
-        const repsRef = React.createRef();
-        refs.push(repsRef, React.createRef());
-        this.setState({ refs: refs }, () => {
-          repsRef.current.select();
-        });
+        this.addEmptySet(index+1);
         return;
       }
       const currRefIndex = field === REPS_FIELD_NAME ? index*2 :
@@ -72,6 +83,12 @@ class Editor extends Component {
       }
     }
 
+    updateWorkout_wrapper = (index, field) => {
+      return (event) => {
+        this.props.updateWorkout(event, index, field);
+      };
+    }
+
     render () {
       return (
         <ol>
@@ -86,10 +103,16 @@ class Editor extends Component {
                       ref={this.state.refs[i*2 + 1]}
                       onChange={this.props.updateWorkout(i, EXER_FIELD_NAME)} 
                       onKeyPress={this.handleNextField_wrapper(i, EXER_FIELD_NAME)} />
-                <button onClick={this.handleDeleteSet_wrapper(i)}> Delete </button>
+                <button onClick={this.handleDeleteSet_wrapper(i)}
+                        disabled={i === 0 ? true : false}> 
+                  Delete 
+                </button>
+                <button onClick={this.addEmptySet_wrapper(i+1)}> 
+                  Insert After 
+                </button>
               </li>
               <li hidden={i+1 === this.props.baseWorkout.length? true : false} > 
-                {`${this.props.breakTime} seconds`} 
+                {`${this.props.breakTime} second break`} 
               </li>
             </div>
           )}
@@ -98,10 +121,45 @@ class Editor extends Component {
     }
 }
 
+function WorkoutDisplay(props) {
+  if (props.isRunning) {
+    return (
+      <ol>
+        {props.baseWorkout.map((Set, i) => 
+            <div key={Set.key}>
+              <li> {`${Set.reps} ${Set.exercise}`} </li>
+              <li hidden={i === props.baseWorkout.length - 1}> 
+                {`${props.breakTime} second break`} 
+              </li>
+            </div>
+        )}
+      </ol>
+    )
+  }
+  else {
+    return (
+      <Editor baseWorkout={props.baseWorkout}
+              breakTime={props.breakTime}
+              updateWorkout={props.updateWorkout} 
+              addEmptySetToBase={props.addEmptySetToBase} 
+              deleteSet={props.deleteSet} />
+    );
+  }
+}
+
+function RunButton(props) {
+  return (
+    <button onClick={props.toggleRun}>
+      {props.isRunning? 'Terminate' : 'Run'}
+    </button>
+  )
+}
+
 class App extends Component {
   state = {
     currentBaseWorkout: workout_test,
     breakTime: 45, //in secs
+    isRunning: true,
   }
 
   /*
@@ -109,12 +167,6 @@ class App extends Component {
     return baseWorkout.reduce((res, curr) => res.concat(curr, new Set(`${this.state.breakTime} seconds`, 'break')), []);
   }
   */
-
-  updateWorkout_wrapper = (index, field) => {
-    return (event) => {
-      this.updateWorkout(event, index, field);
-    };
-  }
 
   updateWorkout = (event, index, field) => {
     const workout = this.state.currentBaseWorkout;
@@ -131,9 +183,10 @@ class App extends Component {
     //console.log(this.state.currentBaseWorkout[index]);
   }
 
-  addEmptySet = () => {
+  addEmptySet = (index) => {
     const workout = this.state.currentBaseWorkout;
-    workout.push(new Set('', ''));
+    //workout.push(new Set('', ''));
+    workout.splice(index, 0, new Set('', ''));
     this.setState({ currentBaseWorkout: workout});
   }
 
@@ -144,15 +197,25 @@ class App extends Component {
     this.setState({ currentBaseWorkout: workout});
   }
 
+  toggleRun = () => {
+    this.setState((prevState) => ({
+      isRunning: !prevState.isRunning
+    }));
+    console.log('run toggled');
+  }
+
   render() {
-    const { currentBaseWorkout, breakTime } = this.state;
+    const { currentBaseWorkout, breakTime, isRunning } = this.state;
     return (
       <div>
-        <Editor baseWorkout={currentBaseWorkout}
-                breakTime={breakTime}
-                updateWorkout={this.updateWorkout_wrapper} 
-                addEmptySet={this.addEmptySet} 
-                deleteSet={this.deleteSet} />
+        <WorkoutDisplay baseWorkout={currentBaseWorkout}
+                        breakTime={breakTime}
+                        isRunning={isRunning}
+                        updateWorkout={this.updateWorkout} 
+                        addEmptySetToBase={this.addEmptySet} 
+                        deleteSet={this.deleteSet} />
+        <RunButton isRunning={isRunning}
+                   toggleRun={this.toggleRun} />
       </div>
     );
   }
