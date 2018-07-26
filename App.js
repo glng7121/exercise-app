@@ -92,14 +92,14 @@ class Editor extends Component {
     render () {
       return (
         <ol>
-          {this.props.baseWorkout.map((Set, i) => 
-            <div key={Set.key}>
+          {this.props.baseWorkout.map((set, i) => 
+            <div key={set.key}>
               <li> 
-                <input className='reps' type='text' placeholder='#' defaultValue={Set.reps.toString()}
+                <input className='reps' type='text' placeholder='#' defaultValue={set.reps.toString()}
                       ref={this.state.refs[i*2]}
                       onChange={this.updateWorkout_wrapper(i, REPS_FIELD_NAME)} 
                       onKeyPress={this.handleNextField_wrapper(i, REPS_FIELD_NAME)} />
-                <input className='exercise' type='text' placeholder='exercise' defaultValue={Set.exercise} 
+                <input className='exercise' type='text' placeholder='exercise' defaultValue={set.exercise} 
                       ref={this.state.refs[i*2 + 1]}
                       onChange={this.updateWorkout_wrapper(i, EXER_FIELD_NAME)} 
                       onKeyPress={this.handleNextField_wrapper(i, EXER_FIELD_NAME)} />
@@ -125,9 +125,9 @@ function WorkoutDisplay(props) {
   if (props.isRunning) {
     return (
       <ol>
-        {props.baseWorkout.map((Set, i) => 
-            <div key={Set.key}>
-              <li> {`${Set.reps} ${Set.exercise}`} </li>
+        {props.baseWorkout.map((set, i) => 
+            <div key={set.key}>
+              <li> {`${set.reps} ${set.exercise}`} </li>
               <li hidden={i === props.baseWorkout.length - 1}> 
                 {`${props.breakTime} second break`} 
               </li>
@@ -197,9 +197,14 @@ class App extends Component {
     this.setState({ currentBaseWorkout: workout});
   }
 
+  isWorkoutInvalid = (workout) => {
+    return workout.find((set) => set.reps === '' || set.exercise === '' || isNaN(Number(set.reps)) || Number(set.reps) <= 0);
+  }
+
   toggleRun = () => {
-    if (!this.state.isRunning && this.state.currentBaseWorkout.find((set) => set.reps === '' || set.exercise === '')) {
-      alert("Error: at least one field is empty, please fill it");
+    if (!this.state.isRunning && this.isWorkoutInvalid(this.state.currentBaseWorkout)) {
+      alert("Error: at least one field is invalid. It may be empty, or not a number if it's a reps field. Please fix and try again");
+      return;
     }
     else {
       this.setState((prevState) => ({
