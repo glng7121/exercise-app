@@ -97,11 +97,11 @@ class Editor extends Component {
               <li> 
                 <input className='reps' type='text' placeholder='#' defaultValue={Set.reps.toString()}
                       ref={this.state.refs[i*2]}
-                      onChange={this.props.updateWorkout(i, REPS_FIELD_NAME)} 
+                      onChange={this.updateWorkout_wrapper(i, REPS_FIELD_NAME)} 
                       onKeyPress={this.handleNextField_wrapper(i, REPS_FIELD_NAME)} />
                 <input className='exercise' type='text' placeholder='exercise' defaultValue={Set.exercise} 
                       ref={this.state.refs[i*2 + 1]}
-                      onChange={this.props.updateWorkout(i, EXER_FIELD_NAME)} 
+                      onChange={this.updateWorkout_wrapper(i, EXER_FIELD_NAME)} 
                       onKeyPress={this.handleNextField_wrapper(i, EXER_FIELD_NAME)} />
                 <button onClick={this.handleDeleteSet_wrapper(i)}
                         disabled={i === 0 ? true : false}> 
@@ -159,7 +159,7 @@ class App extends Component {
   state = {
     currentBaseWorkout: workout_test,
     breakTime: 45, //in secs
-    isRunning: true,
+    isRunning: false,
   }
 
   /*
@@ -198,10 +198,14 @@ class App extends Component {
   }
 
   toggleRun = () => {
-    this.setState((prevState) => ({
-      isRunning: !prevState.isRunning
-    }));
-    console.log('run toggled');
+    if (!this.state.isRunning && this.state.currentBaseWorkout.find((set) => set.reps === '' || set.exercise === '')) {
+      alert("Error: at least one field is empty, please fill it");
+    }
+    else {
+      this.setState((prevState) => ({
+        isRunning: !prevState.isRunning
+      }));
+    }
   }
 
   render() {
