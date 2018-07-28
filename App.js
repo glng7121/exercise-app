@@ -1,9 +1,6 @@
 import React, { Component } from 'react';
 import './App.css';
 
-const REPS_FIELD_NAME = 'reps';
-const EXER_FIELD_NAME = 'exercise';
-
 const id = (() => {
   let currentId = 0;
   const map = new WeakMap();
@@ -17,21 +14,51 @@ const id = (() => {
   };
 })();
 
+function Time(min, sec) {
+  this.min = min;
+  this.sec = sec;
+}
+
 function Set(reps, exercise) {
   this.key = id(this);
   this.reps = reps;
-  this.exercise = exercise;
+  //this.exercise = exercise;
 }
 
-let workout_test = [new Set(25, "pushups"), 
-                    new Set(30, "situps"),
-                    new Set(45, "pushups")];
+function ParsedBreakTime(props) {
+  const { min, sec } = props.breakTime;
+  let msg = '';
+
+  if (min || min === 0) {
+    if (min !== 0) {
+      msg += min.toString() + ' minutes ';
+    }
+  }
+  else {
+    msg += '(invalid minutes) ';
+  }
+  
+  if (sec || sec === 0) {
+    msg += sec.toString() + ' seconds';
+  }
+  else {
+    msg += '(invalid seconds)';
+  }
+
+  return (
+    <div> {msg} </div>
+  );
+}
+
+let workout_test = [new Set('25'), 
+                    new Set('30'),
+                    new Set('45')];
 
 class Editor extends Component {
     constructor(props) {
       super(props);
       let initialRefs = [];
-      for (let i = 0; i < this.props.baseWorkout.length*2; i++) {
+      for (let i = 0; i < this.props.baseWorkout.length; i++) {
         initialRefs.push(React.createRef());
       }
       this.state = { 
@@ -39,8 +66,8 @@ class Editor extends Component {
       };
     }
 
-    handleNextField_wrapper = (index, field) => {
-      return (event) => this.handleNextField(event, index, field);
+    handleNextField_wrapper = (index) => {
+      return (event) => this.handleNextField(event, index);
     }
 
     addEmptySet = (index) => {
@@ -48,9 +75,9 @@ class Editor extends Component {
       this.props.addEmptySetToBase(index);
       const refs = this.state.refs; 
       const repsRef = React.createRef();
-      refs.splice(index*2, 0, repsRef, React.createRef());
+      refs.splice(index, 0, repsRef);
       this.setState({ refs: refs }, () => {
-        repsRef.current.select();
+        this.navigateToNextField(repsRef);
       });
     }
 
@@ -60,32 +87,38 @@ class Editor extends Component {
       }
     }
 
-    handleNextField = (event, index, field) => {
-      if (event.key !== 'Enter') return;
-      if (field === EXER_FIELD_NAME && (index+1)*2 === this.state.refs.length) {
-        this.addEmptySet(index+1);
-        return;
+    navigateToNextField = (ref) => {
+      ref.current.select();
+      const viewportOffset = ref.current.getBoundingClientRect(); //coords are w.r.t. current viewport
+      if (viewportOffset.top < 0 || viewportOffset.bottom > window.innerHeight) {
+        window.scrollTo(0, ref.current.offsetTop);
       }
-      const currRefIndex = field === REPS_FIELD_NAME ? index*2 :
-                           field === EXER_FIELD_NAME ? index*2 + 1 :
-                           null;
-      //console.log(this.state.refs[currRefIndex + 1].current);
-      this.state.refs[currRefIndex + 1].current.select();
+    }
+
+    handleNextField = (event, index) => {
+      if (event.key !== 'Enter') return;
+
+      if (index+1 === this.state.refs.length) {
+        this.addEmptySet(index+1);
+      }
+      else {
+        this.navigateToNextField(this.state.refs[index + 1]);
+      }
     }
 
     handleDeleteSet_wrapper = (index) => {
       return () => {
         const refs = this.state.refs;
-        refs.splice(index*2, 2);
+        refs.splice(index, 1);
         this.setState({ refs: refs }, () => {
           this.props.deleteSet(index);
         });
       }
     }
 
-    updateWorkout_wrapper = (index, field) => {
+    updateWorkout_wrapper = (index) => {
       return (event) => {
-        this.props.updateWorkout(event, index, field);
+        this.props.updateWorkout(event, index);
       };
     }
 
@@ -95,24 +128,21 @@ class Editor extends Component {
           {this.props.baseWorkout.map((set, i) => 
             <div key={set.key}>
               <li> 
-                <input className='reps' type='text' placeholder='#' defaultValue={set.reps.toString()}
-                      ref={this.state.refs[i*2]}
-                      onChange={this.updateWorkout_wrapper(i, REPS_FIELD_NAME)} 
-                      onKeyPress={this.handleNextField_wrapper(i, REPS_FIELD_NAME)} />
-                <input className='exercise' type='text' placeholder='exercise' defaultValue={set.exercise} 
-                      ref={this.state.refs[i*2 + 1]}
-                      onChange={this.updateWorkout_wrapper(i, EXER_FIELD_NAME)} 
-                      onKeyPress={this.handleNextField_wrapper(i, EXER_FIELD_NAME)} />
-                <button onClick={this.handleDeleteSet_wrapper(i)}
-                        disabled={i === 0 ? true : false}> 
+                <input className='reps' type='number' placeholder='#' defaultValue={set.reps.toString()}
+                      ref={this.state.refs[i]}
+                      onChange={this.updateWorkout_wrapper(i)} 
+                      onKeyPress={this.handleNextField_wrapper(i)} />
+                {' '+(this.props.exercise ? this.props.exercise : '(unknown exercise)')}
+                <button className='set-button' onClick={this.handleDeleteSet_wrapper(i)}
+                        disabled={i === 0 && this.props.baseWorkout.length === 1? true : false}> 
                   Delete 
                 </button>
-                <button onClick={this.addEmptySet_wrapper(i+1)}> 
+                <button className='set-button' onClick={this.addEmptySet_wrapper(i+1)}> 
                   Insert After 
                 </button>
               </li>
               <li hidden={i+1 === this.props.baseWorkout.length? true : false} > 
-                {`${this.props.breakTime} second break`} 
+                <ParsedBreakTime breakTime={this.props.breakTime} />
               </li>
             </div>
           )}
@@ -127,9 +157,9 @@ function WorkoutDisplay(props) {
       <ol>
         {props.baseWorkout.map((set, i) => 
             <div key={set.key}>
-              <li> {`${set.reps} ${set.exercise}`} </li>
+              <li> {`${set.reps} ${props.exercise}`} </li>
               <li hidden={i === props.baseWorkout.length - 1}> 
-                {`${props.breakTime} second break`} 
+                <ParsedBreakTime breakTime={props.breakTime} />
               </li>
             </div>
         )}
@@ -140,6 +170,7 @@ function WorkoutDisplay(props) {
     return (
       <Editor baseWorkout={props.baseWorkout}
               breakTime={props.breakTime}
+              exercise={props.exercise}
               updateWorkout={props.updateWorkout} 
               addEmptySetToBase={props.addEmptySetToBase} 
               deleteSet={props.deleteSet} />
@@ -158,7 +189,8 @@ function RunButton(props) {
 class App extends Component {
   state = {
     currentBaseWorkout: workout_test,
-    breakTime: 45, //in secs
+    exercise: null,
+    breakTime: new Time(0, null), //in secs
     isRunning: false,
   }
 
@@ -168,17 +200,9 @@ class App extends Component {
   }
   */
 
-  updateWorkout = (event, index, field) => {
+  updateWorkout = (event, index) => {
     const workout = this.state.currentBaseWorkout;
-    if (field === REPS_FIELD_NAME) {
-      workout[index].reps = event.target.value;
-    }
-    else if (field === EXER_FIELD_NAME) {
-      workout[index].exercise = event.target.value;
-    }
-    else {
-      return;
-    }
+    workout[index].reps = event.target.value;
     this.setState({ currentBaseWorkout: workout });
     //console.log(this.state.currentBaseWorkout[index]);
   }
@@ -198,12 +222,12 @@ class App extends Component {
   }
 
   isWorkoutInvalid = (workout) => {
-    return workout.find((set) => set.reps === '' || set.exercise === '' || isNaN(Number(set.reps)) || Number(set.reps) <= 0);
+    return workout.find((set) => isNaN(Number(set.reps)) || Number(set.reps) <= 0);
   }
 
   toggleRun = () => {
     if (!this.state.isRunning && this.isWorkoutInvalid(this.state.currentBaseWorkout)) {
-      alert("Error: at least one field is invalid. It may be empty, or not a number if it's a reps field. Please fix and try again");
+      alert("Error: at least one reps field is invalid. It's probably empty or a number <= 0. Please fix and try again.");
       return;
     }
     else {
@@ -213,13 +237,59 @@ class App extends Component {
     }
   }
 
+  updateExercise = (event) => {
+    this.setState({
+      exercise: event.target.value
+    });
+  }
+
+  updateBreakMin = (event) => {
+    const newBreakTime = this.state.breakTime;
+    const newMinStr = event.target.value;
+    const newMin = Number(newMinStr);
+
+    if (newMinStr && newMin >= 0) {
+      newBreakTime.min = newMin;
+    }
+    else {
+      newBreakTime.min = null;
+    }
+    
+    this.setState({
+      breakTime: newBreakTime
+    });
+  }
+
+  updateBreakSec = (event) => {
+    const newBreakTime = this.state.breakTime;
+    const newSecStr = event.target.value;
+    const newSec = Number(newSecStr);
+
+    if (newSecStr && newSec >= 0 && newSec <= 59) {
+      newBreakTime.sec = newSec;
+    }
+    else {
+      newBreakTime.sec = null;
+    }
+    
+    this.setState({
+      breakTime: newBreakTime
+    });
+  }
+
   render() {
-    const { currentBaseWorkout, breakTime, isRunning } = this.state;
+    const { currentBaseWorkout, breakTime, isRunning, exercise} = this.state;
     return (
       <div>
+        Exercise: <input type='text' placeholder='Exercise' disabled={isRunning} onChange={this.updateExercise} />
+        <br />
+        Break time: 
+        <input type='number' placeholder='minutes' defaultValue={breakTime.min} disabled={isRunning} onChange={this.updateBreakMin} /> minutes
+        <input type='number' placeholder='seconds' disabled={isRunning} onChange={this.updateBreakSec} /> seconds
         <WorkoutDisplay baseWorkout={currentBaseWorkout}
                         breakTime={breakTime}
                         isRunning={isRunning}
+                        exercise={exercise}
                         updateWorkout={this.updateWorkout} 
                         addEmptySetToBase={this.addEmptySet} 
                         deleteSet={this.deleteSet} />
