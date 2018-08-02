@@ -120,7 +120,7 @@ class Editor extends Component {
         <ol>
           {this.props.baseWorkout.map((set, i) => 
             <div key={set.key}>
-              <li> 
+              <li>
                 <input className='reps' type='number' placeholder='#' defaultValue={set.reps.toString()}
                       ref={this.state.refs[i]}
                       onChange={this.updateWorkout_wrapper(i)} 
@@ -150,7 +150,7 @@ function WorkoutDisplay(props) {
       <ol>
         {props.baseWorkout.map((set, i) => 
             <div key={set.key}>
-              <li> {`${set.reps} ${props.exercise}`} </li>
+              <li> <b> {`${set.reps} ${props.exercise}`} </b> </li>
               <li hidden={i === props.baseWorkout.length - 1}> 
                 <ParsedBreakTime breakTime={props.breakTime} />
               </li>
@@ -182,13 +182,132 @@ function RunButton(props) {
   )
 }
 
+class Countdown extends Component {
+  state = {
+    currBreakTime: this.props.breakTime,
+  }
+
+  constructor(props) {
+    super(props);
+    if (this.isBreakTimeZero(this.props.breakTime)) {
+      this.props.nextSet();
+    }
+    else {
+      this.timer = setInterval(this.tick, 1000);
+    }
+  }
+
+  tick = () => {
+    let currMin = this.state.currBreakTime.min;
+    let currSec = this.state.currBreakTime.sec;
+
+    if (currSec <= 0) {
+        currMin--;
+        currSec = 59;
+    }
+    else {
+      currSec--;
+    }
+
+    if (currMin === 0 && currSec === 0) {
+      this.props.nextSet();
+    }
+    else {
+      const newBreakTime = {
+        min: currMin,
+        sec: currSec
+      };
+
+      this.setState((prevState) => ({
+        currBreakTime: newBreakTime
+      }));
+    }
+  }
+
+  componentDidUpdate = (prevProps) => {
+    const currPaused = this.props.isPaused, prevPaused = prevProps.isPaused;
+    if (currPaused && !prevPaused) {
+      clearInterval(this.timer);
+    }
+    else if (!currPaused && prevPaused) {
+      this.timer = setInterval(this.tick, 1000);
+    }
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.timer);
+  }
+
+  isBreakTimeZero = (breakTime) => {
+    return breakTime.sec === 0 && breakTime.min === 0;
+  }
+
+  render() {
+    const formattedMin = (this.state.currBreakTime.min).toLocaleString('en-US', {minimumIntegerDigits: 2});
+    const formattedSec = (this.state.currBreakTime.sec).toLocaleString('en-US', {minimumIntegerDigits: 2});
+    return (
+      <div>
+        {`${formattedMin}:${formattedSec}`}
+      </div>
+    );
+  }
+}
+
+class RunManager extends Component {
+  state = {
+    isBreakTime: false,
+    currSetIndex: 0,
+    isPaused: false
+  }
+
+  toggleBreakTime = () => {
+    this.setState((prevState) => ({
+      isBreakTime: !prevState.isBreakTime
+    }));
+  }
+
+  togglePause = () => {
+    this.setState((prevState) => ({
+      isPaused: !prevState.isPaused
+    }));
+  }
+
+  nextSet = () => {
+    if (this.state.currSetIndex === this.props.baseWorkout.length - 1) {
+      this.props.toggleRun();
+    }
+    else {
+      this.setState((prevState) => ({
+        currSetIndex: prevState.currSetIndex + 1,
+        isBreakTime: false
+      }))
+    }
+  }
+
+  render() {
+    const { isBreakTime, currSetIndex, isPaused } = this.state;
+    return (
+      <div> 
+        <button onClick={this.togglePause}> {isPaused? 'Unpause' : 'Pause'} </button>
+        <button disabled={isBreakTime} onClick={this.toggleBreakTime}> End Set </button>
+        <h3>
+        { isBreakTime? 
+          <div> {currSetIndex + 2}. Break time: <Countdown breakTime={this.props.breakTime} isPaused={isPaused} nextSet={this.nextSet} /> </div> : 
+          `${currSetIndex + 1}. ${this.props.baseWorkout[this.state.currSetIndex].reps} ${this.props.exercise}`
+        } 
+        </h3>
+      </div>
+    );
+  }  
+}
+
 class App extends Component {
 
   state = {
     currentBaseWorkout: workout_test,
-    exercise: null,
-    breakTime: new Time(0, null), 
-    isRunning: false,
+    exercise: 'pushups',
+    breakTime: new Time(0, 5), 
+    isRunning: true,
     firstEditorRef: React.createRef()
   }
 
@@ -231,7 +350,7 @@ class App extends Component {
   }
 
   isWorkoutInvalid = (workout) => {
-    return workout.find((set) => isNaN(Number(set.reps)) || Number(set.reps) < 0);
+    return workout.find((set) => !set.reps || isNaN(Number(set.reps)) || Number(set.reps) < 0);
   }
 
   isBreakTimeValid = (breakTime) => {
@@ -323,10 +442,10 @@ class App extends Component {
   }
 
   render() {
-    const { currentBaseWorkout, breakTime, isRunning, exercise, firstEditorRef } = this.state;
+    const { currentBaseWorkout, exercise, breakTime, isRunning, firstEditorRef } = this.state;
     return (
       <div>
-        Exercise: <input type='text' placeholder='Exercise' disabled={isRunning} ref={this.setupRefs[this.EXER_IND]} 
+        Exercise: <input type='text' placeholder='Exercise' defaultValue={exercise} disabled={isRunning} ref={this.setupRefs[this.EXER_IND]} 
                          onChange={this.updateExercise} 
                          onKeyPress={this.handleNextField_wrapper(this.EXER_IND)} />
         <br />
@@ -334,7 +453,7 @@ class App extends Component {
         <input type='number' placeholder='minutes' defaultValue={breakTime.min} disabled={isRunning} ref={this.setupRefs[this.BREAK_MIN_IND]} 
                onChange={this.updateBreakMin} 
                onKeyPress={this.handleNextField_wrapper(this.BREAK_MIN_IND)} /> minutes
-        <input type='number' placeholder='seconds' disabled={isRunning} ref={this.setupRefs[this.BREAK_SEC_IND]} 
+        <input type='number' placeholder='seconds' defaultValue={breakTime.sec} disabled={isRunning} ref={this.setupRefs[this.BREAK_SEC_IND]} 
                onChange={this.updateBreakSec} 
                onKeyPress={this.handleNextField_wrapper(this.BREAK_SEC_IND)} /> seconds
         <WorkoutDisplay baseWorkout={currentBaseWorkout}
@@ -347,6 +466,11 @@ class App extends Component {
                         deleteSet={this.deleteSet} 
                         updateFirstEditorRef={this.updateFirstEditorRef}
                         navigateToNextField={this.navigateToNextField} />
+        {isRunning? <RunManager baseWorkout={currentBaseWorkout} 
+                                exercise={exercise} 
+                                breakTime={breakTime} 
+                                toggleRun={this.toggleRun} /> : null}
+        <br />
         <RunButton isRunning={isRunning}
                    toggleRun={this.toggleRun} />
       </div>
