@@ -46,7 +46,7 @@ function ParsedBreakTime(props) {
   }
 
   return (
-    <div> {msg} </div>
+    <span> {msg} break </span>
   );
 }
 
@@ -185,6 +185,7 @@ function RunButton(props) {
 class Countdown extends Component {
   state = {
     currBreakTime: this.props.breakTime,
+    isPaused: false,
   }
 
   constructor(props) {
@@ -195,6 +196,19 @@ class Countdown extends Component {
     else {
       this.timer = setInterval(this.tick, 1000);
     }
+  }
+
+  togglePause = () => {
+    this.setState((prevState) => ({
+      isPaused: !prevState.isPaused
+    }), () => {
+      if (this.state.isPaused) {
+        clearInterval(this.timer);
+      }
+      else {
+        this.timer = setInterval(this.tick, 1000);
+      }
+    });
   }
 
   tick = () => {
@@ -224,16 +238,6 @@ class Countdown extends Component {
     }
   }
 
-  componentDidUpdate = (prevProps) => {
-    const currPaused = this.props.isPaused, prevPaused = prevProps.isPaused;
-    if (currPaused && !prevPaused) {
-      clearInterval(this.timer);
-    }
-    else if (!currPaused && prevPaused) {
-      this.timer = setInterval(this.tick, 1000);
-    }
-  }
-
   componentWillUnmount() {
     clearInterval(this.timer);
   }
@@ -247,6 +251,8 @@ class Countdown extends Component {
     const formattedSec = (this.state.currBreakTime.sec).toLocaleString('en-US', {minimumIntegerDigits: 2});
     return (
       <div>
+        <button onClick={this.togglePause}> {this.state.isPaused? 'Unpause countdown' : 'Pause countdown'} </button>
+        <br />
         {`${formattedMin}:${formattedSec}`}
       </div>
     );
@@ -257,44 +263,39 @@ class RunManager extends Component {
   state = {
     isBreakTime: false,
     currSetIndex: 0,
-    isPaused: false
   }
 
   toggleBreakTime = () => {
-    this.setState((prevState) => ({
-      isBreakTime: !prevState.isBreakTime
-    }));
-  }
-
-  togglePause = () => {
-    this.setState((prevState) => ({
-      isPaused: !prevState.isPaused
-    }));
-  }
-
-  nextSet = () => {
     if (this.state.currSetIndex === this.props.baseWorkout.length - 1) {
       this.props.toggleRun();
     }
     else {
       this.setState((prevState) => ({
-        currSetIndex: prevState.currSetIndex + 1,
-        isBreakTime: false
-      }))
+        isBreakTime: !prevState.isBreakTime
+      }));
     }
   }
 
+  nextSet = () => {
+    this.setState((prevState) => ({
+      currSetIndex: prevState.currSetIndex + 1,
+      isBreakTime: false
+    }))
+  }
+
   render() {
-    const { isBreakTime, currSetIndex, isPaused } = this.state;
+    const { isBreakTime, currSetIndex } = this.state;
     return (
       <div> 
-        <button onClick={this.togglePause}> {isPaused? 'Unpause' : 'Pause'} </button>
         <button disabled={isBreakTime} onClick={this.toggleBreakTime}> End Set </button>
         <h3>
         { isBreakTime? 
-          <div> {currSetIndex + 2}. Break time: <Countdown breakTime={this.props.breakTime} isPaused={isPaused} nextSet={this.nextSet} /> </div> : 
-          `${currSetIndex + 1}. ${this.props.baseWorkout[this.state.currSetIndex].reps} ${this.props.exercise}`
-        } 
+            <div> 
+              {currSetIndex*2 + 2}. 
+              <ParsedBreakTime breakTime={this.props.breakTime} />
+              <Countdown breakTime={this.props.breakTime} nextSet={this.nextSet} /> 
+            </div> : 
+            `${currSetIndex*2 + 1}. ${this.props.baseWorkout[this.state.currSetIndex].reps} ${this.props.exercise}` } 
         </h3>
       </div>
     );
