@@ -134,9 +134,6 @@ class Editor extends Component {
                   Insert After 
                 </button>
               </li>
-              <li hidden={i+1 === this.props.baseWorkout.length? true : false} > 
-                <ParsedBreakTime breakTime={this.props.breakTime} />
-              </li>
             </div>
           )}
         </ol>
@@ -151,9 +148,6 @@ function WorkoutDisplay(props) {
         {props.baseWorkout.map((set, i) => 
             <div key={set.key}>
               <li> <b> {`${set.reps} ${props.exercise}`} </b> </li>
-              <li hidden={i === props.baseWorkout.length - 1}> 
-                <ParsedBreakTime breakTime={props.breakTime} />
-              </li>
             </div>
         )}
       </ol>
@@ -291,11 +285,10 @@ class RunManager extends Component {
         <h3>
         { isBreakTime? 
             <div> 
-              {currSetIndex*2 + 2}. 
               <ParsedBreakTime breakTime={this.props.breakTime} />
               <Countdown breakTime={this.props.breakTime} nextSet={this.nextSet} /> 
             </div> : 
-            `${currSetIndex*2 + 1}. ${this.props.baseWorkout[this.state.currSetIndex].reps} ${this.props.exercise}` } 
+            `${currSetIndex + 1}. ${this.props.baseWorkout[this.state.currSetIndex].reps} ${this.props.exercise}` } 
         </h3>
       </div>
     );
