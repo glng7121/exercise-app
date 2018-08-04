@@ -119,53 +119,24 @@ class Editor extends Component {
       return (
         <ol>
           {this.props.baseWorkout.map((set, i) => 
-            <div key={set.key}>
-              <li>
-                <input className='reps' type='number' placeholder='#' defaultValue={set.reps.toString()}
-                      ref={this.state.refs[i]}
-                      onChange={this.updateWorkout_wrapper(i)} 
-                      onKeyPress={this.handleNextField_wrapper(i)} />
-                {' '+(this.props.exercise ? this.props.exercise : '(unknown exercise)')}
-                <button className='set-button' onClick={this.handleDeleteSet_wrapper(i)}
-                        disabled={i === 0 && this.props.baseWorkout.length === 1? true : false}> 
-                  Delete 
-                </button>
-                <button className='set-button' onClick={this.addEmptySet_wrapper(i+1)}> 
-                  Insert After 
-                </button>
-              </li>
-            </div>
+            <li key={set.key}>
+              <input className='reps' type='number' placeholder='#' defaultValue={set.reps.toString()}
+                    ref={this.state.refs[i]}
+                    onChange={this.updateWorkout_wrapper(i)} 
+                    onKeyPress={this.handleNextField_wrapper(i)} />
+              {' '+(this.props.exercise ? this.props.exercise : '(unknown exercise)')}
+              <button className='set-button' onClick={this.handleDeleteSet_wrapper(i)}
+                      disabled={i === 0 && this.props.baseWorkout.length === 1? true : false}> 
+                Delete 
+              </button>
+              <button className='set-button' onClick={this.addEmptySet_wrapper(i+1)}> 
+                Insert After 
+              </button>
+            </li>
           )}
         </ol>
       );
     }
-}
-
-function WorkoutDisplay(props) {
-  if (props.isRunning) {
-    return (
-      <ol>
-        {props.baseWorkout.map((set, i) => 
-            <div key={set.key}>
-              <li> <b> {`${set.reps} ${props.exercise}`} </b> </li>
-            </div>
-        )}
-      </ol>
-    )
-  }
-  else {
-    return (
-      <Editor baseWorkout={props.baseWorkout}
-              breakTime={props.breakTime}
-              exercise={props.exercise}
-              firstEditorRef={props.firstEditorRef}
-              updateWorkout={props.updateWorkout} 
-              addEmptySetToBase={props.addEmptySetToBase} 
-              deleteSet={props.deleteSet} 
-              updateFirstEditorRef={props.updateFirstEditorRef}
-              navigateToNextField={props.navigateToNextField} />
-    );
-  }
 }
 
 function RunButton(props) {
@@ -281,7 +252,15 @@ class RunManager extends Component {
     const { isBreakTime, currSetIndex } = this.state;
     return (
       <div> 
-        <button disabled={isBreakTime} onClick={this.toggleBreakTime}> End Set </button>
+        <ol>
+          {this.props.baseWorkout.map((set, i) => 
+              <li key={set.key}> 
+                {`${set.reps} ${this.props.exercise}`} 
+                { i === currSetIndex? 
+                  <button disabled={isBreakTime} onClick={this.toggleBreakTime}> End Set </button> 
+                  : null }
+              </li> )}
+        </ol>
         <h3>
         { isBreakTime? 
             <div> 
@@ -450,20 +429,19 @@ class App extends Component {
         <input type='number' placeholder='seconds' defaultValue={breakTime.sec} disabled={isRunning} ref={this.setupRefs[this.BREAK_SEC_IND]} 
                onChange={this.updateBreakSec} 
                onKeyPress={this.handleNextField_wrapper(this.BREAK_SEC_IND)} /> seconds
-        <WorkoutDisplay baseWorkout={currentBaseWorkout}
-                        breakTime={breakTime}
-                        isRunning={isRunning}
-                        exercise={exercise}
-                        firstEditorRef={firstEditorRef}
-                        updateWorkout={this.updateWorkout} 
-                        addEmptySetToBase={this.addEmptySet} 
-                        deleteSet={this.deleteSet} 
-                        updateFirstEditorRef={this.updateFirstEditorRef}
-                        navigateToNextField={this.navigateToNextField} />
         {isRunning? <RunManager baseWorkout={currentBaseWorkout} 
                                 exercise={exercise} 
                                 breakTime={breakTime} 
-                                toggleRun={this.toggleRun} /> : null}
+                                toggleRun={this.toggleRun} /> :
+                    <Editor baseWorkout={currentBaseWorkout}
+                            breakTime={breakTime}
+                            exercise={exercise}
+                            firstEditorRef={firstEditorRef}
+                            updateWorkout={this.updateWorkout} 
+                            addEmptySetToBase={this.addEmptySet} 
+                            deleteSet={this.deleteSet} 
+                            updateFirstEditorRef={this.updateFirstEditorRef}
+                            navigateToNextField={this.navigateToNextField} /> }
         <br />
         <RunButton isRunning={isRunning}
                    toggleRun={this.toggleRun} />
