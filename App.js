@@ -19,10 +19,9 @@ function Time(min, sec) {
   this.sec = sec;
 }
 
-function Set(reps, exercise) {
+function Set(reps) {
   this.key = id(this);
   this.reps = reps;
-  //this.exercise = exercise;
 }
 
 function ParsedBreakTime(props) {
@@ -117,33 +116,36 @@ class Editor extends Component {
 
     render () {
       return (
-        <table>
-          <tbody>
-            {this.props.baseWorkout.map((set, i) => 
-              <tr key={set.key}>
-                <td> {`${i+1})`} </td>
-                <td>
-                  <input className='reps' type='number' placeholder='#' defaultValue={set.reps.toString()}
-                        ref={this.state.refs[i]}
-                        onChange={this.updateWorkout_wrapper(i)} 
-                        onKeyPress={this.handleNextField_wrapper(i)} />
-                  {' '+(this.props.exercise ? this.props.exercise : '(unknown exercise)')}
-                </td>
-                <td>
-                  <button className='set-button' onClick={this.handleDeleteSet_wrapper(i)}
-                          disabled={i === 0 && this.props.baseWorkout.length === 1? true : false}> 
-                    Delete 
-                  </button>
-                </td>
-                <td>
-                  <button className='set-button' onClick={this.addEmptySet_wrapper(i+1)}> 
-                    Insert After 
-                  </button>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+        <div>
+          <h4> Edit your workout! </h4>
+          <table>
+            <tbody>
+              {this.props.baseWorkout.map((set, i) => 
+                <tr key={set.key}>
+                  <td> {`${i+1})`} </td>
+                  <td>
+                    <input className='reps' type='number' placeholder='#' defaultValue={set.reps.toString()}
+                          ref={this.state.refs[i]}
+                          onChange={this.updateWorkout_wrapper(i)} 
+                          onKeyPress={this.handleNextField_wrapper(i)} />
+                    {' '+(this.props.exercise ? this.props.exercise : '(unknown exercise)')}
+                  </td>
+                  <td>
+                    <button className='set-button' onClick={this.handleDeleteSet_wrapper(i)}
+                            disabled={i === 0 && this.props.baseWorkout.length === 1? true : false}> 
+                      Delete 
+                    </button>
+                  </td>
+                  <td>
+                    <button className='set-button' onClick={this.addEmptySet_wrapper(i+1)}> 
+                      Insert After 
+                    </button>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       );
     }
 }
@@ -165,7 +167,7 @@ class Countdown extends Component {
   constructor(props) {
     super(props);
     if (this.isBreakTimeZero(this.props.breakTime)) {
-      this.props.nextSet();
+      this.props.endBreak();
     }
     else {
       this.timer = setInterval(this.tick, 1000);
@@ -198,7 +200,7 @@ class Countdown extends Component {
     }
 
     if (currMin === 0 && currSec === 0) {
-      this.props.nextSet();
+      this.props.endBreak();
     }
     else {
       const newBreakTime = {
@@ -225,11 +227,10 @@ class Countdown extends Component {
     const formattedSec = (this.state.currBreakTime.sec).toLocaleString('en-US', {minimumIntegerDigits: 2});
     return (
       <div>
-        <button onClick={this.togglePause}> {this.state.isPaused? 'Unpause countdown' : 'Pause countdown'} </button>
-        <br />
         {`${formattedMin}:${formattedSec}`}
       </div>
     );
+    //pausing break button: <button onClick={this.togglePause}> {this.state.isPaused? 'Unpause break' : 'Pause break'} </button>
   }
 }
 
@@ -245,14 +246,14 @@ class RunManager extends Component {
     }
     else {
       this.setState((prevState) => ({
-        isBreakTime: !prevState.isBreakTime
+        isBreakTime: true,
+        currSetIndex: prevState.currSetIndex + 1
       }));
     }
   }
 
-  nextSet = () => {
+  endBreak = () => {
     this.setState((prevState) => ({
-      currSetIndex: prevState.currSetIndex + 1,
       isBreakTime: false
     }))
   }
@@ -261,6 +262,7 @@ class RunManager extends Component {
     const { isBreakTime, currSetIndex } = this.state;
     return (
       <div> 
+        <h4>Currently running...</h4>
         <table>
           <tbody>
             {this.props.baseWorkout.map((set, i) => 
@@ -269,22 +271,19 @@ class RunManager extends Component {
                   <td>
                     {`${set.reps} ${this.props.exercise}`} 
                   </td>
-                  <td>
-                    { i === currSetIndex? 
+                  { i === currSetIndex?
+                    <td>
                       <button disabled={isBreakTime} onClick={this.toggleBreakTime}> End This Set </button> 
-                      : null }
-                  </td>
+                    </td> 
+                    : null }
+                  { i === currSetIndex && isBreakTime? 
+                    <td>
+                      <Countdown breakTime={this.props.breakTime} endBreak={this.endBreak} />
+                    </td> 
+                    : null }
                 </tr> )}
           </tbody>
         </table>
-        <h3>
-        { isBreakTime? 
-            <div> 
-              <ParsedBreakTime breakTime={this.props.breakTime} />
-              <Countdown breakTime={this.props.breakTime} nextSet={this.nextSet} /> 
-            </div> : 
-            `${currSetIndex + 1}. ${this.props.baseWorkout[this.state.currSetIndex].reps} ${this.props.exercise}` } 
-        </h3>
       </div>
     );
   }  
@@ -293,10 +292,10 @@ class RunManager extends Component {
 class App extends Component {
 
   state = {
-    currentBaseWorkout: workout_test,
+    currentBaseWorkout: [new Set('')], //workout_test,
     exercise: 'pushups',
     breakTime: new Time(0, 5), 
-    isRunning: true,
+    isRunning: false,
     firstEditorRef: React.createRef()
   }
 
