@@ -117,24 +117,33 @@ class Editor extends Component {
 
     render () {
       return (
-        <ol>
-          {this.props.baseWorkout.map((set, i) => 
-            <li key={set.key}>
-              <input className='reps' type='number' placeholder='#' defaultValue={set.reps.toString()}
-                    ref={this.state.refs[i]}
-                    onChange={this.updateWorkout_wrapper(i)} 
-                    onKeyPress={this.handleNextField_wrapper(i)} />
-              {' '+(this.props.exercise ? this.props.exercise : '(unknown exercise)')}
-              <button className='set-button' onClick={this.handleDeleteSet_wrapper(i)}
-                      disabled={i === 0 && this.props.baseWorkout.length === 1? true : false}> 
-                Delete 
-              </button>
-              <button className='set-button' onClick={this.addEmptySet_wrapper(i+1)}> 
-                Insert After 
-              </button>
-            </li>
-          )}
-        </ol>
+        <table>
+          <tbody>
+            {this.props.baseWorkout.map((set, i) => 
+              <tr key={set.key}>
+                <td> {`${i+1})`} </td>
+                <td>
+                  <input className='reps' type='number' placeholder='#' defaultValue={set.reps.toString()}
+                        ref={this.state.refs[i]}
+                        onChange={this.updateWorkout_wrapper(i)} 
+                        onKeyPress={this.handleNextField_wrapper(i)} />
+                  {' '+(this.props.exercise ? this.props.exercise : '(unknown exercise)')}
+                </td>
+                <td>
+                  <button className='set-button' onClick={this.handleDeleteSet_wrapper(i)}
+                          disabled={i === 0 && this.props.baseWorkout.length === 1? true : false}> 
+                    Delete 
+                  </button>
+                </td>
+                <td>
+                  <button className='set-button' onClick={this.addEmptySet_wrapper(i+1)}> 
+                    Insert After 
+                  </button>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       );
     }
 }
@@ -252,15 +261,22 @@ class RunManager extends Component {
     const { isBreakTime, currSetIndex } = this.state;
     return (
       <div> 
-        <ol>
-          {this.props.baseWorkout.map((set, i) => 
-              <li key={set.key}> 
-                {`${set.reps} ${this.props.exercise}`} 
-                { i === currSetIndex? 
-                  <button disabled={isBreakTime} onClick={this.toggleBreakTime}> End Set </button> 
-                  : null }
-              </li> )}
-        </ol>
+        <table>
+          <tbody>
+            {this.props.baseWorkout.map((set, i) => 
+                <tr key={set.key}> 
+                  <td> {`${i+1})`} </td>
+                  <td>
+                    {`${set.reps} ${this.props.exercise}`} 
+                  </td>
+                  <td>
+                    { i === currSetIndex? 
+                      <button disabled={isBreakTime} onClick={this.toggleBreakTime}> End This Set </button> 
+                      : null }
+                  </td>
+                </tr> )}
+          </tbody>
+        </table>
         <h3>
         { isBreakTime? 
             <div> 
