@@ -292,18 +292,15 @@ class RunManager extends Component {
 class App extends Component {
 
   state = {
-    currentBaseWorkout: [new Set('')], //workout_test,
-    exercise: 'pushups',
-    breakTime: new Time(0, 5), 
+    currentBaseWorkout: App.generateInitWorkout(), //workout_test,
+    exercise: null,
+    breakTime: new Time(0, null), 
     isRunning: false,
     firstEditorRef: React.createRef()
   }
 
   constructor(props) {
     super(props);
-    this.EXER_IND = 0;
-    this.BREAK_MIN_IND = 1;
-    this.BREAK_SEC_IND = 2;
     this.setupRefs = []; //stores refs for workout setup: exercise, min/sec of breaktime
     for (let i = 0; i < 3; i++) {
       this.setupRefs.push(React.createRef());
@@ -429,21 +426,34 @@ class App extends Component {
     });
   }
 
+  discardWorkout = () => {
+    this.setState({
+      currentBaseWorkout: App.generateInitWorkout(),
+      exercise: null,
+      breakTime: new Time(0, null), 
+    });
+  }
+
+  static generateInitWorkout = () => {
+    return [new Set('')];
+  }
+
   render() {
     const { currentBaseWorkout, exercise, breakTime, isRunning, firstEditorRef } = this.state;
+    //<button onClick={this.discardWorkout}> Discard Workout </button>
     return (
       <div>
-        Exercise: <input type='text' placeholder='Exercise' defaultValue={exercise} disabled={isRunning} ref={this.setupRefs[this.EXER_IND]} 
+        Exercise: <input type='text' placeholder='Exercise' defaultValue={exercise} disabled={isRunning} ref={this.setupRefs[App.EXER_IND]} 
                          onChange={this.updateExercise} 
-                         onKeyPress={this.handleNextField_wrapper(this.EXER_IND)} />
+                         onKeyPress={this.handleNextField_wrapper(App.EXER_IND)} />
         <br />
         Break time: 
-        <input type='number' placeholder='minutes' defaultValue={breakTime.min} disabled={isRunning} ref={this.setupRefs[this.BREAK_MIN_IND]} 
+        <input type='number' placeholder='minutes' defaultValue={breakTime.min} disabled={isRunning} ref={this.setupRefs[App.BREAK_MIN_IND]} 
                onChange={this.updateBreakMin} 
-               onKeyPress={this.handleNextField_wrapper(this.BREAK_MIN_IND)} /> minutes
-        <input type='number' placeholder='seconds' defaultValue={breakTime.sec} disabled={isRunning} ref={this.setupRefs[this.BREAK_SEC_IND]} 
+               onKeyPress={this.handleNextField_wrapper(App.BREAK_MIN_IND)} /> minutes
+        <input type='number' placeholder='seconds' defaultValue={breakTime.sec} disabled={isRunning} ref={this.setupRefs[App.BREAK_SEC_IND]} 
                onChange={this.updateBreakSec} 
-               onKeyPress={this.handleNextField_wrapper(this.BREAK_SEC_IND)} /> seconds
+               onKeyPress={this.handleNextField_wrapper(App.BREAK_SEC_IND)} /> seconds
         {isRunning? <RunManager baseWorkout={currentBaseWorkout} 
                                 exercise={exercise} 
                                 breakTime={breakTime} 
@@ -464,5 +474,9 @@ class App extends Component {
     );
   }
 }
+
+App.EXER_IND = 0;
+App.BREAK_MIN_IND = 1;
+App.BREAK_SEC_IND = 2;
 
 export default App;
