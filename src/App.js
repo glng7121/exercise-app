@@ -1,6 +1,9 @@
 import React, { Component } from 'react';
+import Editor from './Editor.js';
+import RunManager from './RunManager.js';
 import './App.css';
 
+//id function from https://stackoverflow.com/a/43963612
 const id = (() => {
   let currentId = 0;
   const map = new WeakMap();
@@ -24,6 +27,7 @@ function Set(reps) {
   this.reps = reps;
 }
 
+/*
 function ParsedBreakTime(props) {
   const { min, sec } = props.breakTime;
   let msg = '';
@@ -48,107 +52,11 @@ function ParsedBreakTime(props) {
     <span> {msg} break </span>
   );
 }
+*/
 
 let workout_test = [new Set('25'), 
                     new Set('30'),
                     new Set('45')];
-
-class Editor extends Component {
-    constructor(props) {
-      super(props);
-      let initialRefs = [this.props.firstEditorRef]; //will always have at least 1 set
-      for (let i = 1; i < this.props.baseWorkout.length; i++) {
-        initialRefs.push(React.createRef());
-      }
-      this.state = { 
-        refs: initialRefs 
-      };
-    }
-
-    handleNextField_wrapper = (index) => {
-      return (event) => this.handleNextField(event, index);
-    }
-
-    addEmptySet = (index) => {
-      //registers a new empty set at index
-      this.props.addEmptySetToBase(index);
-      const refs = this.state.refs; 
-      const repsRef = React.createRef();
-      refs.splice(index, 0, repsRef);
-      this.setState({ refs: refs }, () => {
-        this.props.navigateToNextField(repsRef);
-      });
-    }
-
-    addEmptySet_wrapper = (index) => {
-      return () => {
-        this.addEmptySet(index);
-      }
-    }
-
-    handleNextField = (event, index) => {
-      if (event.key !== 'Enter') return;
-
-      if (index+1 === this.state.refs.length) {
-        this.addEmptySet(index+1);
-      }
-      else {
-        this.props.navigateToNextField(this.state.refs[index + 1]);
-      }
-    }
-
-    handleDeleteSet_wrapper = (index) => {
-      return () => {
-        const refs = this.state.refs;
-        refs.splice(index, 1);
-        this.setState({ refs: refs }, () => {
-          this.props.updateFirstEditorRef(this.state.refs[0]);
-          this.props.deleteSet(index);
-        });
-      }
-    }
-
-    updateWorkout_wrapper = (index) => {
-      return (event) => {
-        this.props.updateWorkout(event, index);
-      };
-    }
-
-    render () {
-      return (
-        <div>
-          <h4> Edit your workout! </h4>
-          <table>
-            <tbody>
-              {this.props.baseWorkout.map((set, i) => 
-                <tr key={set.key}>
-                  <td> {`${i+1})`} </td>
-                  <td>
-                    <input className='reps' type='number' placeholder='#' defaultValue={set.reps.toString()}
-                          ref={this.state.refs[i]}
-                          onChange={this.updateWorkout_wrapper(i)} 
-                          onKeyPress={this.handleNextField_wrapper(i)} />
-                    {' '+(this.props.exercise ? this.props.exercise : '(unknown exercise)')}
-                  </td>
-                  <td>
-                    <button className='set-button' onClick={this.handleDeleteSet_wrapper(i)}
-                            disabled={i === 0 && this.props.baseWorkout.length === 1? true : false}> 
-                      Delete 
-                    </button>
-                  </td>
-                  <td>
-                    <button className='set-button' onClick={this.addEmptySet_wrapper(i+1)}> 
-                      Insert After 
-                    </button>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      );
-    }
-}
 
 function RunButton(props) {
   return (
@@ -158,139 +66,7 @@ function RunButton(props) {
   )
 }
 
-class Countdown extends Component {
-  state = {
-    currBreakTime: this.props.breakTime,
-    isPaused: false,
-  }
-
-  constructor(props) {
-    super(props);
-    if (this.isBreakTimeZero(this.props.breakTime)) {
-      this.props.endBreak();
-    }
-    else {
-      this.timer = setInterval(this.tick, 1000);
-    }
-  }
-
-  togglePause = () => {
-    this.setState((prevState) => ({
-      isPaused: !prevState.isPaused
-    }), () => {
-      if (this.state.isPaused) {
-        clearInterval(this.timer);
-      }
-      else {
-        this.timer = setInterval(this.tick, 1000);
-      }
-    });
-  }
-
-  tick = () => {
-    let currMin = this.state.currBreakTime.min;
-    let currSec = this.state.currBreakTime.sec;
-
-    if (currSec <= 0) {
-        currMin--;
-        currSec = 59;
-    }
-    else {
-      currSec--;
-    }
-
-    if (currMin === 0 && currSec === 0) {
-      this.props.endBreak();
-    }
-    else {
-      const newBreakTime = {
-        min: currMin,
-        sec: currSec
-      };
-
-      this.setState((prevState) => ({
-        currBreakTime: newBreakTime
-      }));
-    }
-  }
-
-  componentWillUnmount() {
-    clearInterval(this.timer);
-  }
-
-  isBreakTimeZero = (breakTime) => {
-    return breakTime.sec === 0 && breakTime.min === 0;
-  }
-
-  render() {
-    const formattedMin = (this.state.currBreakTime.min).toLocaleString('en-US', {minimumIntegerDigits: 2});
-    const formattedSec = (this.state.currBreakTime.sec).toLocaleString('en-US', {minimumIntegerDigits: 2});
-    return (
-      <div>
-        {`${formattedMin}:${formattedSec}`}
-      </div>
-    );
-    //pausing break button: <button onClick={this.togglePause}> {this.state.isPaused? 'Unpause break' : 'Pause break'} </button>
-  }
-}
-
-class RunManager extends Component {
-  state = {
-    isBreakTime: false,
-    currSetIndex: 0,
-  }
-
-  toggleBreakTime = () => {
-    if (this.state.currSetIndex === this.props.baseWorkout.length - 1) {
-      this.props.toggleRun();
-    }
-    else {
-      this.setState((prevState) => ({
-        isBreakTime: true,
-        currSetIndex: prevState.currSetIndex + 1
-      }));
-    }
-  }
-
-  endBreak = () => {
-    this.setState((prevState) => ({
-      isBreakTime: false
-    }))
-  }
-
-  render() {
-    const { isBreakTime, currSetIndex } = this.state;
-    return (
-      <div> 
-        <h4>Currently running...</h4>
-        <table>
-          <tbody>
-            {this.props.baseWorkout.map((set, i) => 
-                <tr key={set.key}> 
-                  <td> {`${i+1})`} </td>
-                  <td>
-                    {`${set.reps} ${this.props.exercise}`} 
-                  </td>
-                  { i === currSetIndex?
-                    <td>
-                      <button disabled={isBreakTime} onClick={this.toggleBreakTime}> End This Set </button> 
-                    </td> 
-                    : null }
-                  { i === currSetIndex && isBreakTime? 
-                    <td>
-                      <Countdown breakTime={this.props.breakTime} endBreak={this.endBreak} />
-                    </td> 
-                    : null }
-                </tr> )}
-          </tbody>
-        </table>
-      </div>
-    );
-  }  
-}
-
 class App extends Component {
-
   state = {
     currentBaseWorkout: App.generateInitWorkout(), //workout_test,
     exercise: null,
@@ -426,21 +202,19 @@ class App extends Component {
     });
   }
 
-  discardWorkout = () => {
-    this.setState({
-      currentBaseWorkout: App.generateInitWorkout(),
-      exercise: null,
-      breakTime: new Time(0, null), 
-    });
-  }
-
   static generateInitWorkout = () => {
     return [new Set('')];
   }
 
+  discardWorkout = () => {
+    //not changing exercise and break time for now
+    this.setState({
+      currentBaseWorkout: App.generateInitWorkout(),
+    });
+  }
+
   render() {
     const { currentBaseWorkout, exercise, breakTime, isRunning, firstEditorRef } = this.state;
-    //<button onClick={this.discardWorkout}> Discard Workout </button>
     return (
       <div>
         Exercise: <input type='text' placeholder='Exercise' defaultValue={exercise} disabled={isRunning} ref={this.setupRefs[App.EXER_IND]} 
@@ -466,7 +240,8 @@ class App extends Component {
                             addEmptySetToBase={this.addEmptySet} 
                             deleteSet={this.deleteSet} 
                             updateFirstEditorRef={this.updateFirstEditorRef}
-                            navigateToNextField={this.navigateToNextField} /> }
+                            navigateToNextField={this.navigateToNextField} 
+                            discardWorkout={this.discardWorkout} /> }
         <br />
         <RunButton isRunning={isRunning}
                    toggleRun={this.toggleRun} />
