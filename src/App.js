@@ -71,16 +71,11 @@ class App extends Component {
     currentBaseWorkout: App.generateInitWorkout(), //workout_test,
     exercise: null,
     breakTime: new Time(0, null), 
-    isRunning: false,
-    firstEditorRef: React.createRef()
+    isRunning: false
   }
 
-  constructor(props) {
-    super(props);
-    this.setupRefs = []; //stores refs for workout setup: exercise, min/sec of breaktime
-    for (let i = 0; i < 3; i++) {
-      this.setupRefs.push(React.createRef());
-    }
+  static generateInitWorkout = () => {
+    return [new Set('')];
   }
 
   /*
@@ -89,22 +84,19 @@ class App extends Component {
   }
   */
 
-  updateWorkout = (event, index) => {
+  updateSet = (event, index) => {
     const workout = this.state.currentBaseWorkout;
     workout[index].reps = event.target.value;
     this.setState({ currentBaseWorkout: workout });
-    //console.log(this.state.currentBaseWorkout[index]);
   }
 
   addEmptySet = (index) => {
     const workout = this.state.currentBaseWorkout;
-    //workout.push(new Set('', ''));
     workout.splice(index, 0, new Set('', ''));
     this.setState({ currentBaseWorkout: workout});
   }
 
   deleteSet = (index) => {
-    //index is with respect to the base workout
     const workout = this.state.currentBaseWorkout;
     workout.splice(index, 1);
     this.setState({ currentBaseWorkout: workout});
@@ -170,64 +162,18 @@ class App extends Component {
     });
   }
 
-  navigateToNextField = (ref) => {
-    ref.current.select();
-    const viewportOffset = ref.current.getBoundingClientRect(); //coords are w.r.t. current viewport
-    if (viewportOffset.top < 0 || viewportOffset.bottom > window.innerHeight) {
-      window.scrollTo(0, ref.current.offsetTop);
-    }
-  }
-
-  handleNextField = (event, index) => {
-    if (event.key !== 'Enter') return;
-
-    let nextRef = null;
-    if (index+1 === this.setupRefs.length) {
-      nextRef = this.state.firstEditorRef;
-    }
-    else {
-      nextRef = this.setupRefs[index + 1];
-    }
-
-    this.navigateToNextField(nextRef);
-  }
-
-  handleNextField_wrapper = (index) => {
-    return (event) => this.handleNextField(event, index);
-  }
-
-  updateFirstEditorRef = (ref) => {
-    this.setState({
-      firstEditorRef: ref
-    });
-  }
-
-  static generateInitWorkout = () => {
-    return [new Set('')];
-  }
-
   discardWorkout = () => {
-    //not changing exercise and break time for now
     this.setState({
       currentBaseWorkout: App.generateInitWorkout(),
+      exercise: null,
+      breakTime: new Time(0, null)
     });
   }
 
   render() {
-    const { currentBaseWorkout, exercise, breakTime, isRunning, firstEditorRef } = this.state;
+    const { currentBaseWorkout, exercise, breakTime, isRunning } = this.state;
     return (
       <div>
-        Exercise: <input type='text' placeholder='Exercise' defaultValue={exercise} disabled={isRunning} ref={this.setupRefs[App.EXER_IND]} 
-                         onChange={this.updateExercise} 
-                         onKeyPress={this.handleNextField_wrapper(App.EXER_IND)} />
-        <br />
-        Break time: 
-        <input type='number' placeholder='minutes' defaultValue={breakTime.min} disabled={isRunning} ref={this.setupRefs[App.BREAK_MIN_IND]} 
-               onChange={this.updateBreakMin} 
-               onKeyPress={this.handleNextField_wrapper(App.BREAK_MIN_IND)} /> minutes
-        <input type='number' placeholder='seconds' defaultValue={breakTime.sec} disabled={isRunning} ref={this.setupRefs[App.BREAK_SEC_IND]} 
-               onChange={this.updateBreakSec} 
-               onKeyPress={this.handleNextField_wrapper(App.BREAK_SEC_IND)} /> seconds
         {isRunning? <RunManager baseWorkout={currentBaseWorkout} 
                                 exercise={exercise} 
                                 breakTime={breakTime} 
@@ -235,12 +181,12 @@ class App extends Component {
                     <Editor baseWorkout={currentBaseWorkout}
                             breakTime={breakTime}
                             exercise={exercise}
-                            firstEditorRef={firstEditorRef}
-                            updateWorkout={this.updateWorkout} 
+                            updateExercise={this.updateExercise}
+                            updateBreakMin={this.updateBreakMin}
+                            updateBreakSec={this.updateBreakSec}
+                            updateSet={this.updateSet} 
                             addEmptySetToBase={this.addEmptySet} 
                             deleteSet={this.deleteSet} 
-                            updateFirstEditorRef={this.updateFirstEditorRef}
-                            navigateToNextField={this.navigateToNextField} 
                             discardWorkout={this.discardWorkout} /> }
         <br />
         <RunButton isRunning={isRunning}
@@ -249,9 +195,5 @@ class App extends Component {
     );
   }
 }
-
-App.EXER_IND = 0;
-App.BREAK_MIN_IND = 1;
-App.BREAK_SEC_IND = 2;
 
 export default App;
