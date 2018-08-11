@@ -39,7 +39,7 @@ class Editor extends Component {
         ref.current.select();
         const viewportOffset = ref.current.getBoundingClientRect(); //coords are w.r.t. current viewport
         if (viewportOffset.top < 0 || viewportOffset.bottom > window.innerHeight) {
-          window.scrollTo(0, ref.current.offsetTop);
+          window.scrollTo(0, viewportOffset.top + document.documentElement.scrollTop);
         }
       }
 

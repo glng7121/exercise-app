@@ -27,33 +27,6 @@ function Set(reps) {
   this.reps = reps;
 }
 
-/*
-function ParsedBreakTime(props) {
-  const { min, sec } = props.breakTime;
-  let msg = '';
-
-  if (min || min === 0) {
-    if (min !== 0) {
-      msg += min.toString() + ' minutes ';
-    }
-  }
-  else {
-    msg += '(invalid minutes) ';
-  }
-  
-  if (sec || sec === 0) {
-    msg += sec.toString() + ' seconds';
-  }
-  else {
-    msg += '(invalid seconds)';
-  }
-
-  return (
-    <span> {msg} break </span>
-  );
-}
-*/
-
 let workout_test = [new Set('25'), 
                     new Set('30'),
                     new Set('45')];

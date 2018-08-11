@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import Countdown from './Countdown.js';
+import ParsedBreakTime from './ParsedBreakTime.js';
 
 class RunManager extends Component {
     state = {
@@ -30,6 +31,7 @@ class RunManager extends Component {
       return (
         <div> 
           <h4>Currently running...</h4>
+          <h5>Break time: <ParsedBreakTime breakTime={this.props.breakTime} /> </h5>
           <table>
             <tbody>
               {this.props.baseWorkout.map((set, i) => 
