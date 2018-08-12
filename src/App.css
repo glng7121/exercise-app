@@ -28,5 +28,20 @@
 }
 
 * {
-  font-size: 20px;
+  font-size: 30px;
+}
+
+#appComponent {
+  margin: 5% auto;
+  text-align: center;
+}
+
+#toggleRunBtn {
+  font-size: 35px;
+  padding: 10px;
+  box-shadow: 1px 1px;
+  border-radius: 3px 3px;
+  background-color: green;
+  color: white;
+  margin: 0 auto;
 }

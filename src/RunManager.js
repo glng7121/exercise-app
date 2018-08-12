@@ -30,8 +30,7 @@ class RunManager extends Component {
       const { isBreakTime, currSetIndex } = this.state;
       return (
         <div> 
-          <h4>Currently running...</h4>
-          <h5>Break time: <ParsedBreakTime breakTime={this.props.breakTime} /> </h5>
+          Break time: <ParsedBreakTime breakTime={this.props.breakTime} />
           <table>
             <tbody>
               {this.props.baseWorkout.map((set, i) => 

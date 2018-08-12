@@ -33,8 +33,8 @@ let workout_test = [new Set('25'),
 
 function RunButton(props) {
   return (
-    <button onClick={props.toggleRun}>
-      {props.isRunning? 'Terminate' : 'Run'}
+    <button id='toggleRunBtn' onClick={props.toggleRun}>
+      {props.isRunning? 'Terminate' : 'Run this workout!'}
     </button>
   )
 }
@@ -146,7 +146,10 @@ class App extends Component {
   render() {
     const { currentBaseWorkout, exercise, breakTime, isRunning } = this.state;
     return (
-      <div>
+      <div id='appComponent'>
+        <h1> 
+          {isRunning? 'Currently running workout...' : 'Edit your workout!' }
+        </h1>
         {isRunning? <RunManager baseWorkout={currentBaseWorkout} 
                                 exercise={exercise} 
                                 breakTime={breakTime} 
@@ -161,7 +164,6 @@ class App extends Component {
                             addEmptySetToBase={this.addEmptySet} 
                             deleteSet={this.deleteSet} 
                             discardWorkout={this.discardWorkout} /> }
-        <br />
         <RunButton isRunning={isRunning}
                    toggleRun={this.toggleRun} />
       </div>
