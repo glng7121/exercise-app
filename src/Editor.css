@@ -1,21 +1,6 @@
-th {
-    text-align: center; /* center attribute was overwritten by #appComponent */
-}
-
 #editorComponent {
-    margin: 5% 0;
+    margin: 5% auto;
     text-align: left;
-}
-
-#workoutFields {
-    border: 1px solid black;
-    border-radius: 5px;
-    box-shadow: 1px 1px;
-    margin: 0 auto;
-}
-
-#setupFields {
-    width: 100%;
 }
 
 .number-field {
@@ -26,19 +11,7 @@ th {
     width: 200px;
 }
 
-#setFields {
-    margin: 0 auto;
-}
-
 .button-menu {
     margin: 20px 0px;
     padding: 10px;
-}
-
-#setupFields {
-    border-bottom: 1px solid black;
-}
-
-td {
-    padding: 8px;
 }
