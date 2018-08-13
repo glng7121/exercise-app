@@ -1,6 +1,10 @@
 #editorComponent {
-    margin: 5% auto;
+    margin: 5%;
     text-align: left;
+}
+
+#editorInterface {
+    margin: 0 auto;
 }
 
 .number-field {

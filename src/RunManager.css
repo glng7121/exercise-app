@@ -1,5 +1,5 @@
 #runManagerComponent {
-    margin: 5% 0;
+    margin: 5% 10%;
 }
 
 #runManagerComponent th {
@@ -8,7 +8,7 @@
 
 #runManagerComponent .workout-fields {
     text-align: left;
-    width: 450px;
+    min-width: 450px;
 }
 
 #runManagerComponent .workout-fields td {

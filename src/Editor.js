@@ -103,87 +103,89 @@ class Editor extends Component {
 
     render () {
       return (
-        <table id='editorComponent'>
-            <tbody>
-              <tr>
-                <td className='button-menu'>
-                  <button onClick={this.discardWorkout}> Discard Workout </button>
-                  more buttons later...
+        <div id='editorComponent'>
+          <table id='editorInterface'>
+              <tbody>
+                <tr>
+                  <td className='button-menu'>
+                    <button onClick={this.discardWorkout}> Discard Workout </button>
+                    more buttons later...
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                  <table className='workout-fields'>
+                    <tbody>
+                      <tr>
+                        <td>
+                          <table className='setup-fields'>
+                            <tbody>
+                              <tr>
+                                <td> Exercise: </td>
+                                <td> 
+                                    <input id='exerciseField' type='text' placeholder='e.g. pushups' defaultValue={this.props.exercise} ref={this.setupRefs[Editor.EXER_IND]} 
+                                          onChange={this.props.updateExercise} 
+                                          onKeyPress={this.handleNextField_wrapper(Editor.EXER_IND, Editor.FIELD_ID_SETUP)} />
+                                </td>
+                              </tr>
+                              <tr>
+                                <td> Break time: </td>
+                                <td> 
+                                  <input className='number-field' type='number' placeholder='#' defaultValue={this.props.breakTime.min} ref={this.setupRefs[Editor.BREAK_MIN_IND]} 
+                                        onChange={this.props.updateBreakMin} 
+                                        onKeyPress={this.handleNextField_wrapper(Editor.BREAK_MIN_IND, Editor.FIELD_ID_SETUP)} /> minutes &nbsp;
+                                  <input className='number-field' type='number' placeholder='#' defaultValue={this.props.breakTime.sec} ref={this.setupRefs[Editor.BREAK_SEC_IND]} 
+                                        onChange={this.props.updateBreakSec} 
+                                        onKeyPress={this.handleNextField_wrapper(Editor.BREAK_SEC_IND, Editor.FIELD_ID_SETUP)} /> seconds
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <table className='set-fields'>
+                              <thead>
+                                <tr>
+                                  <th colSpan='4'> Sets </th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                
+                              {this.props.baseWorkout.map((set, i) => 
+                                  <tr key={set.key}>
+                                    <td> {`${i+1})`} </td>
+                                    <td>
+                                        <input className='number-field' type='number' placeholder='#' defaultValue={set.reps.toString()}
+                                            ref={this.state.setRefs[i]}
+                                            onChange={this.updateSet_wrapper(i)} 
+                                            onKeyPress={this.handleNextField_wrapper(i, Editor.FIELD_ID_SET)} />
+                                    </td>
+                                    <td>
+                                        <button className='set-button' onClick={this.handleDeleteSet_wrapper(i)}
+                                                disabled={i === 0 && this.props.baseWorkout.length === 1? true : false}> 
+                                        Delete 
+                                        </button>
+                                    </td>
+                                    <td>
+                                        <button className='set-button' onClick={this.addEmptySet_wrapper(i+1)}> 
+                                        Insert After 
+                                        </button>
+                                    </td>
+                                  </tr>
+                              )}
+                              </tbody>
+                          </table>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </td>
               </tr>
-              <tr>
-                <td>
-                <table className='workout-fields'>
-                  <tbody>
-                    <tr>
-                      <td>
-                        <table className='setup-fields'>
-                          <tbody>
-                            <tr>
-                              <td> Exercise: </td>
-                              <td> 
-                                  <input id='exerciseField' type='text' placeholder='e.g. pushups' defaultValue={this.props.exercise} ref={this.setupRefs[Editor.EXER_IND]} 
-                                        onChange={this.props.updateExercise} 
-                                        onKeyPress={this.handleNextField_wrapper(Editor.EXER_IND, Editor.FIELD_ID_SETUP)} />
-                              </td>
-                            </tr>
-                            <tr>
-                              <td> Break time: </td>
-                              <td> 
-                                <input className='number-field' type='number' placeholder='#' defaultValue={this.props.breakTime.min} ref={this.setupRefs[Editor.BREAK_MIN_IND]} 
-                                      onChange={this.props.updateBreakMin} 
-                                      onKeyPress={this.handleNextField_wrapper(Editor.BREAK_MIN_IND, Editor.FIELD_ID_SETUP)} /> minutes &nbsp;
-                                <input className='number-field' type='number' placeholder='#' defaultValue={this.props.breakTime.sec} ref={this.setupRefs[Editor.BREAK_SEC_IND]} 
-                                      onChange={this.props.updateBreakSec} 
-                                      onKeyPress={this.handleNextField_wrapper(Editor.BREAK_SEC_IND, Editor.FIELD_ID_SETUP)} /> seconds
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <table className='set-fields'>
-                            <thead>
-                              <tr>
-                                <th colSpan='4'> Sets </th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              
-                            {this.props.baseWorkout.map((set, i) => 
-                                <tr key={set.key}>
-                                  <td> {`${i+1})`} </td>
-                                  <td>
-                                      <input className='number-field' type='number' placeholder='#' defaultValue={set.reps.toString()}
-                                          ref={this.state.setRefs[i]}
-                                          onChange={this.updateSet_wrapper(i)} 
-                                          onKeyPress={this.handleNextField_wrapper(i, Editor.FIELD_ID_SET)} />
-                                  </td>
-                                  <td>
-                                      <button className='set-button' onClick={this.handleDeleteSet_wrapper(i)}
-                                              disabled={i === 0 && this.props.baseWorkout.length === 1? true : false}> 
-                                      Delete 
-                                      </button>
-                                  </td>
-                                  <td>
-                                      <button className='set-button' onClick={this.addEmptySet_wrapper(i+1)}> 
-                                      Insert After 
-                                      </button>
-                                  </td>
-                                </tr>
-                            )}
-                            </tbody>
-                        </table>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+            </tbody>
+          </table>
+        </div>
       );
     }
 }

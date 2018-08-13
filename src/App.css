@@ -28,11 +28,11 @@
 }
 
 * {
-  font-size: 30px;
+  font-size: 25px;
 }
 
 #appComponent {
-  margin: 5% auto;
+  margin: 5% 8%;
   text-align: center;
 }
 

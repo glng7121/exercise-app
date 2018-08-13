@@ -91,7 +91,9 @@ class App extends Component {
     else {
       this.setState((prevState) => ({
         isRunning: !prevState.isRunning
-      }));
+      }), () => {
+        window.scrollTo(0, 0);
+      });
     }
   }
 
