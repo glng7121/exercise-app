@@ -28,17 +28,17 @@
 }
 
 * {
-  font-size: 25px;
+  font-size: 6vw;
 }
 
 #appComponent {
-  margin: 5% 8%;
+  margin: 0;
   text-align: center;
 }
 
 #toggleRunBtn {
-  font-size: 35px;
-  padding: 10px;
+  font-size: 8vw;
+  padding: 5vw;
   box-shadow: 1px 1px;
   border-radius: 3px 3px;
   background-color: green;

@@ -8,14 +8,14 @@
 
 #runManagerComponent .workout-fields {
     text-align: left;
-    min-width: 450px;
+    width: 30vw;
 }
 
 #runManagerComponent .workout-fields td {
-    padding: 4px 8px;
+    padding: 1vw 2vw;
     height: 40px;
 }
 
 #runManagerComponent .set-fields {
-    margin: 3%;
+    margin: 1vw;
 }

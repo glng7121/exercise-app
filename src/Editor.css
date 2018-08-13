@@ -1,5 +1,5 @@
 #editorComponent {
-    margin: 5%;
+    margin: 5vw 0;
     text-align: left;
 }
 
@@ -8,14 +8,15 @@
 }
 
 .number-field {
-    width: 80px;
+    max-width: 15vw;
 }
 
 #exerciseField {
-    width: 200px;
+    /*max-width: 200px;*/
+    width: 35vw;
 }
 
 .button-menu {
-    margin: 20px 0px;
-    padding: 10px;
+    margin: 0;
+    padding: 2vw;
 }

@@ -109,7 +109,7 @@ class Editor extends Component {
                 <tr>
                   <td className='button-menu'>
                     <button onClick={this.discardWorkout}> Discard Workout </button>
-                    more buttons later...
+                    
                   </td>
                 </tr>
                 <tr>

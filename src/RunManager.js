@@ -70,7 +70,7 @@ class RunManager extends Component {
                             </td>
                             { i === currSetIndex?
                               <td>
-                                <button disabled={isBreakTime} onClick={this.toggleBreakTime}> End This Set </button> 
+                                <button disabled={isBreakTime} onClick={this.toggleBreakTime}> End Set </button> 
                               </td> 
                               : null }
                             { i === currSetIndex && isBreakTime? 
