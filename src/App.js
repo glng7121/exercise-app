@@ -43,7 +43,7 @@ class App extends Component {
   state = {
     currentBaseWorkout: App.generateInitWorkout(), //workout_test,
     exercise: null,
-    breakTime: new Time(0, null), 
+    breakTime: new Time(null, null), 
     isRunning: false
   }
 
@@ -80,12 +80,23 @@ class App extends Component {
   }
 
   isBreakTimeValid = (breakTime) => {
-    return breakTime.min !== null && breakTime.min >= 0 && breakTime.sec !== null && breakTime.sec >= 0 && breakTime.sec <= 59;
+    return !(breakTime.min === null && breakTime.sec === null)
+           && breakTime.min >= 0 && breakTime.sec >= 0; //if null, still behaves as expected
+  }
+
+  parseTime = (time) => {
+    //no validation checks here!
+    const min = Number(time.min) + Math.floor(Number(time.sec)/60);
+    const sec = Number(time.sec) % 60;
+    return new Time(min, sec);
   }
 
   toggleRun = () => {
     if (!this.state.isRunning && (!this.state.exercise || !this.isBreakTimeValid(this.state.breakTime) || this.isWorkoutInvalid(this.state.currentBaseWorkout))) {
-      alert("Error: at least one field is invalid. No field should be empty, all numbers should be >= 0, and the # of seconds should be <= 59. Please fix and try again.");
+      alert(`Error: at least one field is invalid. Please note that...
+      1. All set fields, the exercise field, and at least one break time field should be filled. 
+      2. All numbers should be >= 0. 
+Please fix and try again. Thanks!`);
       return;
     }
     else {
@@ -103,45 +114,36 @@ class App extends Component {
     });
   }
 
-  updateBreakMin = (event) => {
-    const newBreakTime = this.state.breakTime;
-    const newMinStr = event.target.value;
-    const newMin = Number(newMinStr);
+  updateBreakTime_wrapper = (unit) => {
+    return (event) => {
+      const newBreakTime = this.state.breakTime;
+      const newUnitStr = event.target.value;
+      const newUnit = Number(newUnitStr);
 
-    if (newMinStr && newMin >= 0) {
-      newBreakTime.min = newMin;
-    }
-    else {
-      newBreakTime.min = null;
-    }
-    
-    this.setState({
-      breakTime: newBreakTime
-    });
-  }
+      switch (unit) {
+        case App.ID_MIN:
+          if (newUnitStr) newBreakTime.min = newUnit;
+          else newBreakTime.min = null;
+          break;
+        case App.ID_SEC:
+          if (newUnitStr) newBreakTime.sec = newUnit;
+          else newBreakTime.sec = null;
+          break;
+        default:
+          return;
+      }
 
-  updateBreakSec = (event) => {
-    const newBreakTime = this.state.breakTime;
-    const newSecStr = event.target.value;
-    const newSec = Number(newSecStr);
-
-    if (newSecStr && newSec >= 0 && newSec <= 59) {
-      newBreakTime.sec = newSec;
-    }
-    else {
-      newBreakTime.sec = null;
-    }
-    
-    this.setState({
-      breakTime: newBreakTime
-    });
+      this.setState({
+        breakTime: newBreakTime
+      });
+    };
   }
 
   discardWorkout = () => {
     this.setState({
       currentBaseWorkout: App.generateInitWorkout(),
       exercise: null,
-      breakTime: new Time(0, null)
+      breakTime: new Time(null, null)
     });
   }
 
@@ -154,14 +156,14 @@ class App extends Component {
         </h1>
         {isRunning? <RunManager baseWorkout={currentBaseWorkout} 
                                 exercise={exercise} 
-                                breakTime={breakTime} 
+                                breakTime={this.parseTime(breakTime)} 
                                 toggleRun={this.toggleRun} /> :
                     <Editor baseWorkout={currentBaseWorkout}
                             breakTime={breakTime}
                             exercise={exercise}
                             updateExercise={this.updateExercise}
-                            updateBreakMin={this.updateBreakMin}
-                            updateBreakSec={this.updateBreakSec}
+                            updateBreakMin={this.updateBreakTime_wrapper(App.ID_MIN)}
+                            updateBreakSec={this.updateBreakTime_wrapper(App.ID_SEC)}
                             updateSet={this.updateSet} 
                             addEmptySetToBase={this.addEmptySet} 
                             deleteSet={this.deleteSet} 
@@ -172,5 +174,8 @@ class App extends Component {
     );
   }
 }
+
+App.ID_MIN = 'id min';
+App.ID_SEC = 'id sec';
 
 export default App;

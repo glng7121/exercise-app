@@ -93,8 +93,10 @@ class Editor extends Component {
 
     discardWorkout = () => {
       this.props.discardWorkout();
+      //manually change setup fields because they won't respond to app's state changing.
+      //could fix by propagating app's state to editor, todo later maybe?
       this.setupRefs[Editor.EXER_IND].current.value = '';
-      this.setupRefs[Editor.BREAK_MIN_IND].current.value = 0;
+      this.setupRefs[Editor.BREAK_MIN_IND].current.value = '';
       this.setupRefs[Editor.BREAK_SEC_IND].current.value = '';
       this.setState({
         setRefs: [React.createRef()]
