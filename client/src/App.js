@@ -41,10 +41,10 @@ function RunButton(props) {
 
 class App extends Component {
   state = {
-    currentBaseWorkout: App.generateInitWorkout(), //workout_test,
-    exercise: null,
-    breakTime: new Time(null, null), 
-    isRunning: false
+    currentBaseWorkout: workout_test, //App.generateInitWorkout(), //workout_test,
+    exercise: 'pushups', // null,
+    breakTime: new Time(0, 2), //new Time(null, null), 
+    isRunning: true //false
   }
 
   static generateInitWorkout = () => {
