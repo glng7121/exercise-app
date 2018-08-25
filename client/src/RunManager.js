@@ -35,10 +35,11 @@ class RunManager extends Component {
       // get audio for workout announcements
       fetch('/sounds/break-sound.wav')
         .then(response => response.arrayBuffer())
-        .then(buffer => this.audioBufs.breakSound.buffer = buffer);
-      fetch('/sounds/break-start.wav')
+        .then(buffer => this.audioBufs.breakSound.buffer = buffer)
+        .then(() => fetch('/sounds/break-start.wav'))
         .then(response => response.arrayBuffer())
-        .then(buffer => this.audioBufs.breakStart.buffer = buffer);
+        .then(buffer => this.audioBufs.breakStart.buffer = buffer)
+        .catch(error => console.log(error));
 
       for (let i = 0; i < this.props.baseWorkout.length; i++) {
         this.audioBufs.sets[i] = audioBufObj(null);
@@ -125,9 +126,17 @@ class RunManager extends Component {
     .catch(error => console.log(error));
   }
 
-  //plays array of buffers in sequence, starting at index 0
+  //plays array of buffers in sequence, starting at index 0. skips empty buffers
   playAudioBufs = (buffers) => {
-    const buffer = buffers.shift();
+    //get first useful buffer
+    let buffer;
+    while (!buffer && buffers.length > 0)
+    {
+      buffer = buffers.shift();
+    }
+    
+    if (!buffer && buffers.length === 0) return;
+
     context.decodeAudioData(buffer.slice()) //must operate on new copy of buffer since copy will be wiped later
     .then(decodedBuf => {
       let source = context.createBufferSource(); // creates a sound source
