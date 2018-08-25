@@ -1,31 +1,8 @@
 import React from 'react';
+import { parsedBreakTimeStr } from './helpers.js';
 
 function ParsedBreakTime(props) {
-    const { min, sec } = props.breakTime;
-    let msg = '';
-  
-    if (min || min === 0) {
-      if (min !== 0 || !sec) {
-        const label = min === 1? 'minute' : 'minutes';
-        msg += min.toString() + ' '+ label + ' ';
-      }
-      //else, min == 0. omit it
-    }
-    else {
-      msg += '(invalid minutes) ';
-    }
-    
-    if (sec || sec === 0) {
-      if (sec !== 0 || !min) {
-        const label = sec === 1? 'second' : 'seconds';
-        msg += sec.toString() + ' ' + label;
-      }
-      //else, sec == 0. omit it
-    }
-    else {
-      msg += '(invalid seconds)';
-    }
-  
+    let msg = parsedBreakTimeStr(props.breakTime);
     return (
       <span> {msg} </span>
     );
