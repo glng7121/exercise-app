@@ -133,12 +133,12 @@ class Editor extends Component {
                               <tr>
                                 <td> Break time: </td>
                                 <td> 
-                                  <input className='number-field' type='number' placeholder='#' defaultValue={this.props.breakTime.min} ref={this.setupRefs[Editor.BREAK_MIN_IND]} 
+                                  <input className='number-field' type='number' placeholder='min' defaultValue={this.props.breakTime.min} ref={this.setupRefs[Editor.BREAK_MIN_IND]} 
                                         onChange={this.props.updateBreakMin} 
-                                        onKeyPress={this.handleNextField_wrapper(Editor.BREAK_MIN_IND, Editor.FIELD_ID_SETUP)} /> minutes &nbsp;
-                                  <input className='number-field' type='number' placeholder='#' defaultValue={this.props.breakTime.sec} ref={this.setupRefs[Editor.BREAK_SEC_IND]} 
+                                        onKeyPress={this.handleNextField_wrapper(Editor.BREAK_MIN_IND, Editor.FIELD_ID_SETUP)} />:
+                                  <input className='number-field' type='number' placeholder='sec' defaultValue={this.props.breakTime.sec} ref={this.setupRefs[Editor.BREAK_SEC_IND]} 
                                         onChange={this.props.updateBreakSec} 
-                                        onKeyPress={this.handleNextField_wrapper(Editor.BREAK_SEC_IND, Editor.FIELD_ID_SETUP)} /> seconds
+                                        onKeyPress={this.handleNextField_wrapper(Editor.BREAK_SEC_IND, Editor.FIELD_ID_SETUP)} />
                                 </td>
                               </tr>
                             </tbody>

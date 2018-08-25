@@ -1,9 +1,10 @@
 import React, { Component } from 'react';
+import { audioBufObj } from './helpers.js';
 
 class Countdown extends Component {
     state = {
       currBreakTime: this.props.breakTime,
-      isPaused: false,
+      isPaused: false
     }
   
     constructor(props) {
@@ -14,6 +15,20 @@ class Countdown extends Component {
       else {
         this.timer = setInterval(this.tick, 1000);
       }
+      this.audioBufs = {
+        countdowns: [ audioBufObj(null) ]
+      };
+
+      for (let i = 1; i <= 5; i++) {
+        this.audioBufs.countdowns[i] = audioBufObj(null);
+        fetch(`/sounds/countdown-${i}.wav`)
+        .then(response => response.arrayBuffer())
+        .then(buffer => this.audioBufs.countdowns[i].buffer = buffer);
+      }
+    }
+
+    componentWillUnmount() {
+      clearInterval(this.timer);
     }
   
     togglePause = () => {
@@ -45,23 +60,34 @@ class Countdown extends Component {
         this.props.endBreak();
       }
       else {
+        if (currMin === 0 && currSec <= 5) {
+          this.props.context.decodeAudioData(this.audioBufs.countdowns[currSec].buffer)
+          .then(decodedBuf => {
+            let source = this.props.context.createBufferSource();
+            source.buffer = decodedBuf;
+            source.connect(this.props.context.destination);
+            source.start(0);
+          })
+          .catch(error => {
+            console.log(error);
+          });
+        }
         const newBreakTime = {
           min: currMin,
           sec: currSec
         };
-  
         this.setState((prevState) => ({
           currBreakTime: newBreakTime
         }));
       }
     }
   
-    componentWillUnmount() {
-      clearInterval(this.timer);
-    }
-  
     isBreakTimeZero = (breakTime) => {
-      return breakTime.sec === 0 && breakTime.min === 0;
+      return breakTime.min === 0 && breakTime.sec === 0;
+    }
+
+    isLastFiveSec = (breakTime) => {
+      return breakTime.min === 0 && breakTime.sec <= 5;
     }
   
     render() {

@@ -1,9 +1,7 @@
-import React from 'react';
-
-function ParsedBreakTime(props) {
-    const { min, sec } = props.breakTime;
+export function parsedBreakTimeStr(breakTime) {
+    const { min, sec } = breakTime;
     let msg = '';
-  
+    
     if (min || min === 0) {
       if (min !== 0 || !sec) {
         const label = min === 1? 'minute' : 'minutes';
@@ -26,9 +24,9 @@ function ParsedBreakTime(props) {
       msg += '(invalid seconds)';
     }
   
-    return (
-      <span> {msg} </span>
-    );
-  }
+    return msg;
+}
 
-  export default ParsedBreakTime;
+export function audioBufObj(buffer) {
+  return { 'buffer': buffer };
+}
