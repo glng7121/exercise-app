@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import Countdown from './Countdown.js';
 import ParsedBreakTime from './ParsedBreakTime.js';
-import { parsedBreakTimeStr } from './helpers.js';
+import { parsedBreakTimeStr, audioBufObj } from './helpers.js';
 import './RunManager.css';
 import './workoutDisplay.css';
 
@@ -16,10 +16,6 @@ class RunManager extends Component {
     currSetIndex: 0
   }
 
-  audioBufObj = (buffer) => {
-    return { 'buffer': buffer };
-  }
-
   constructor(props) {
     super(props);
     try {
@@ -30,8 +26,8 @@ class RunManager extends Component {
       this.apiToken = null;
       this.apiTokenTime = 0;
       this.audioBufs = {
-        breakSound: this.audioBufObj(null),
-        breakStart: this.audioBufObj(null),
+        breakSound: audioBufObj(null),
+        breakStart: audioBufObj(null),
         sets: []
       };
       this.isPlaying = false;
@@ -45,7 +41,7 @@ class RunManager extends Component {
         .then(buffer => this.audioBufs.breakStart.buffer = buffer);
 
       for (let i = 0; i < this.props.baseWorkout.length; i++) {
-        this.audioBufs.sets[i] = this.audioBufObj(null);
+        this.audioBufs.sets[i] = audioBufObj(null);
         const message = i === 0? `Running workout for ${this.props.exercise} with ${parsedBreakTimeStr(this.props.breakTime)} break time.` 
           : '';
         const setType = i === this.props.baseWorkout.length - 1? 'Last' 
@@ -132,7 +128,7 @@ class RunManager extends Component {
   //plays array of buffers in sequence, starting at index 0
   playAudioBufs = (buffers) => {
     const buffer = buffers.shift();
-    return context.decodeAudioData(buffer.slice()) //must operate on new copy of buffer since copy will be wiped later
+    context.decodeAudioData(buffer.slice()) //must operate on new copy of buffer since copy will be wiped later
     .then(decodedBuf => {
       let source = context.createBufferSource(); // creates a sound source
       source.onended = function () {

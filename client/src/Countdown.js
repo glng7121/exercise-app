@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { audioBufObj } from './helpers.js';
 
 class Countdown extends Component {
     state = {
@@ -15,19 +16,15 @@ class Countdown extends Component {
         this.timer = setInterval(this.tick, 1000);
       }
       this.audioBufs = {
-        countdowns: [ this.audioBufObj(null) ]
+        countdowns: [ audioBufObj(null) ]
       };
 
       for (let i = 1; i <= 5; i++) {
-        this.audioBufs.countdowns[i] = this.audioBufObj(null);
+        this.audioBufs.countdowns[i] = audioBufObj(null);
         fetch(`/sounds/countdown-${i}.wav`)
         .then(response => response.arrayBuffer())
         .then(buffer => this.audioBufs.countdowns[i].buffer = buffer);
       }
-    }
-
-    audioBufObj = (buffer) => {
-      return { 'buffer': buffer };
     }
 
     componentWillUnmount() {
@@ -66,10 +63,7 @@ class Countdown extends Component {
         if (currMin === 0 && currSec <= 5) {
           this.props.context.decodeAudioData(this.audioBufs.countdowns[currSec].buffer)
           .then(decodedBuf => {
-            let source = this.props.context.createBufferSource(); // creates a sound source
-            source.onended = function () {
-              console.log('finished playing');
-            };
+            let source = this.props.context.createBufferSource();
             source.buffer = decodedBuf;
             source.connect(this.props.context.destination);
             source.start(0);

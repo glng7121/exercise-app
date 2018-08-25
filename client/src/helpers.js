@@ -26,3 +26,7 @@ export function parsedBreakTimeStr(breakTime) {
   
     return msg;
 }
+
+export function audioBufObj(buffer) {
+  return { 'buffer': buffer };
+}
