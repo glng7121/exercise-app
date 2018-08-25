@@ -43,7 +43,7 @@ class App extends Component {
   state = {
     currentBaseWorkout: workout_test, //App.generateInitWorkout(), //workout_test,
     exercise: 'pushups', // null,
-    breakTime: new Time(0, 2), //new Time(null, null), 
+    breakTime: new Time(0, 6), //new Time(null, null), 
     isRunning: true //false
   }
 

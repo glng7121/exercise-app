@@ -25,4 +25,4 @@ export function parsedBreakTimeStr(breakTime) {
     }
   
     return msg;
-  }
+}

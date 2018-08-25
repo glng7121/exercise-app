@@ -14,6 +14,17 @@ app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
 
 // API calls
+app.get('/sounds/:file', (req, res, next) => {
+    const options = {
+        root: __dirname
+    };
+    res.sendFile(`/sounds/${req.params.file}`, options, function (error) {
+        if (error) {
+            next(error);
+        }
+    });
+});
+
 app.post('/api/tts', (req, res) => {
     const message = req.body.message;
     console.log(message);
