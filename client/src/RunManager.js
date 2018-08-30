@@ -126,29 +126,26 @@ class RunManager extends Component {
     .catch(error => console.log(error));
   }
 
-  //plays array of buffers in sequence, starting at index 0. skips empty buffers
+  //recursively plays array of buffers in sequence, starting at index 0. skips empty buffers
   playAudioBufs = (buffers) => {
-    //get first useful buffer
-    let buffer;
-    while (!buffer && buffers.length > 0)
-    {
-      buffer = buffers.shift();
+    if (buffers.length <= 0) return;
+
+    let buffer = buffers.shift();
+    if (!buffer) {
+      //empty buffer, skip it
+      this.playAudioBufs(buffers);
+      return;
     }
-    
-    if (!buffer && buffers.length === 0) return;
 
     context.decodeAudioData(buffer.slice()) //must operate on new copy of buffer since copy will be wiped later
     .then(decodedBuf => {
       let source = context.createBufferSource(); // creates a sound source
       source.onended = function () {
-        if (buffers.length > 0) {
-          this.playAudioBufs(buffers);
-        }
+        this.playAudioBufs(buffers);
       }.bind(this);
       source.buffer = decodedBuf;                // tell the source which sound to play
       source.connect(context.destination);       // connect the source to the context's destination (the speakers)
       source.start(0);
-      //this.isPlaying = true;
     })
     .catch(error => console.log(error));
   }
@@ -159,7 +156,12 @@ class RunManager extends Component {
     }
     else {
       //start break time
-      this.playAudioBufs([this.audioBufs.breakSound.buffer, this.audioBufs.breakStart.buffer]);
+      let breakStartAudioBufs = [this.audioBufs.breakSound.buffer]; //break start beep
+      if (this.props.breakTime.min === 0 && this.props.breakTime.sec > 6) {
+        //only include break start voiceover if it won't collide with the 5-sec break time countdown 
+        breakStartAudioBufs.push(this.audioBufs.breakStart.buffer);
+      }
+      this.playAudioBufs(breakStartAudioBufs);
       this.setState((prevState) => ({
         isBreakTime: true,
         currSetIndex: prevState.currSetIndex + 1
