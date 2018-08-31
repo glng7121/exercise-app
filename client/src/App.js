@@ -3,6 +3,8 @@ import Editor from './Editor.js';
 import RunManager from './RunManager.js';
 import './App.css';
 
+const NotificationSystem = require('react-notification-system');
+
 //id function from https://stackoverflow.com/a/43963612
 const id = (() => {
   let currentId = 0;
@@ -41,10 +43,30 @@ function RunButton(props) {
 
 class App extends Component {
   state = {
-    currentBaseWorkout: App.generateInitWorkout(), //workout_test,
-    exercise: null,
-    breakTime: new Time(null, null), 
+    currentBaseWorkout: workout_test, //App.generateInitWorkout(), //workout_test,
+    exercise: 'pushups', //null,
+    breakTime: new Time(0, 3), //new Time(null, null), 
     isRunning: false
+  }
+
+  constructor(props) {
+    super(props);
+    this._notificationSystem = React.createRef();
+    this.notifStyles = {
+      NotificationItem: { // Override the notification item
+        DefaultStyle: { // Applied to every notification, regardless of the notification level
+          fontSize: '4vw'
+        }
+      }
+    }
+  }
+
+  _addNotification = (message, autoDismissSec=0, level='success') => {
+    this._notificationSystem.current.addNotification({
+      message: message,
+      level: level,
+      autoDismiss: autoDismissSec,
+    });
   }
 
   static generateInitWorkout = () => {
@@ -100,6 +122,7 @@ Please fix and try again. Thanks!`);
       return;
     }
     else {
+      this._addNotification('testing, heres a long message. wowiewflkadsf \n so sweeeeet omg');
       this.setState((prevState) => ({
         isRunning: !prevState.isRunning
       }), () => {
@@ -151,9 +174,9 @@ Please fix and try again. Thanks!`);
     const { currentBaseWorkout, exercise, breakTime, isRunning } = this.state;
     return (
       <div id='appComponent'>
-        <h1> 
+        <h2> 
           {isRunning? 'Currently running workout...' : 'Edit your workout!' }
-        </h1>
+        </h2>
         {isRunning? <RunManager baseWorkout={currentBaseWorkout} 
                                 exercise={exercise} 
                                 breakTime={this.parseTime(breakTime)} 
@@ -170,6 +193,7 @@ Please fix and try again. Thanks!`);
                             discardWorkout={this.discardWorkout} /> }
         <RunButton isRunning={isRunning}
                    toggleRun={this.toggleRun} />
+        <NotificationSystem ref={this._notificationSystem} style={this.notifStyles} />
       </div>
     );
   }

@@ -1,3 +1,7 @@
+input, select, textarea, button {
+  font-size: inherit;
+}
+
 .App {
   text-align: center;
 }
@@ -27,12 +31,9 @@
   to { transform: rotate(360deg); }
 }
 
-* {
-  font-size: 6vw;
-}
-
 #appComponent {
   margin: 0;
+  font-size: 6vw;
   text-align: center;
 }
 
@@ -44,4 +45,8 @@
   background-color: green;
   color: white;
   margin: 0 auto;
+}
+
+.NotificationSystem {
+  font-size: 3px;
 }
