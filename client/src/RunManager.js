@@ -34,6 +34,7 @@ class RunManager extends Component {
         localSrc: {
           breakSound: audioBufObj(null, 'break time buzzer'),
           breakStart: audioBufObj(null, 'break start announcement'),
+          countdown: [ audioBufObj(null) ]
         },
         remoteSrc: {
           sets: []
@@ -43,8 +44,16 @@ class RunManager extends Component {
 
       // get audio for workout announcements
       for (let soundType in this.audioBufs.localSrc) {
-        const fileName = `${soundType.replace(/([A-Z])/g, ($1) => `-${$1.toLowerCase()}`)}.wav`;
-        this.getAudioBuf(this.audioBufs.localSrc[soundType], RunManager.SRC_LOCAL, fileName);
+        if (soundType === 'countdown') {
+          for (let i = 1; i <= 5; i++) {
+            this.audioBufs.localSrc.countdown.push(new audioBufObj(null, `${addSuffixToNum(i)} second of the break countdown`));
+            this.getAudioBuf(this.audioBufs.localSrc['countdown'][i], RunManager.SRC_LOCAL, `countdown-${i}.wav`);
+          }
+        }
+        else {
+          const fileName = `${soundType.replace(/([A-Z])/g, ($1) => `-${$1.toLowerCase()}`)}.wav`;
+          this.getAudioBuf(this.audioBufs.localSrc[soundType], RunManager.SRC_LOCAL, fileName);
+        }
       }
       for (let i = 0; i < this.props.baseWorkout.length; i++) {
         const message = i === 0? `Running workout for ${this.props.exercise} with ${parsedBreakTimeStr(this.props.breakTime)} break time.` 
@@ -226,6 +235,11 @@ class RunManager extends Component {
     }
   }
 
+  announceTick = (sec) => {
+    if (sec < 1 || sec > 5) return;
+    this.playAudioBufs([this.audioBufs.localSrc.countdown[sec]]);
+  }
+
   endBreak = () => {
     this.playAudioBufs([this.audioBufs.localSrc.breakSound, this.audioBufs.remoteSrc.sets[this.state.currSetIndex]]);
     //this.apiTest(`Next set: ${this.props.baseWorkout[this.state.currSetIndex].reps} ${this.props.exercise}`);
@@ -279,7 +293,9 @@ class RunManager extends Component {
                             : null }
                           { i === currSetIndex && isBreakTime? 
                             <td>
-                              <Countdown breakTime={this.props.breakTime} endBreak={this.endBreak} context={context} />
+                              <Countdown breakTime={this.props.breakTime} 
+                                         endBreak={this.endBreak} 
+                                         announceTick={this.announceTick} />
                             </td> 
                             : null }
                         </tr>

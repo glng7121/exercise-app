@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import { audioBufObj } from './helpers.js';
 
 class Countdown extends Component {
     state = {
@@ -14,16 +13,6 @@ class Countdown extends Component {
       }
       else {
         this.timer = setInterval(this.tick, 1000);
-      }
-      this.audioBufs = {
-        countdowns: [ audioBufObj(null) ]
-      };
-
-      for (let i = 1; i <= 5; i++) {
-        this.audioBufs.countdowns[i] = audioBufObj(null);
-        fetch(`/sounds/countdown-${i}.wav`)
-        .then(response => response.arrayBuffer())
-        .then(buffer => this.audioBufs.countdowns[i].buffer = buffer);
       }
     }
 
@@ -61,24 +50,7 @@ class Countdown extends Component {
       }
       else {
         if (currMin === 0 && currSec <= 5) {
-          this.props.context.decodeAudioData(this.audioBufs.countdowns[currSec].buffer)
-          .then(decodedBuf => {
-            let source = this.props.context.createBufferSource();
-            source.buffer = decodedBuf;
-            source.connect(this.props.context.destination);
-            source.start(0);
-          })
-          .catch(error => {
-            console.log(error);
-            console.log('this:');
-            console.log(this);
-            console.log('this.props.context:');
-            console.log(this.props.context);
-            console.log('this.audioBufs.countdowns[currSec]:');
-            console.log(this.audioBufs.countdowns[currSec]);
-            console.log('this.audioBufs.countdowns[currSec].buffer:');
-            console.log(this.audioBufs.countdowns[currSec].buffer);
-          });
+          this.props.announceTick(currSec);
         }
         const newBreakTime = {
           min: currMin,
