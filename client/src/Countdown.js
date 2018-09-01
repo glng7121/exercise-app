@@ -70,6 +70,14 @@ class Countdown extends Component {
           })
           .catch(error => {
             console.log(error);
+            console.log('this:');
+            console.log(this);
+            console.log('this.props.context:');
+            console.log(this.props.context);
+            console.log('this.audioBufs.countdowns[currSec]:');
+            console.log(this.audioBufs.countdowns[currSec]);
+            console.log('this.audioBufs.countdowns[currSec].buffer:');
+            console.log(this.audioBufs.countdowns[currSec].buffer);
           });
         }
         const newBreakTime = {

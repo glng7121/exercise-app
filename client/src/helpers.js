@@ -27,9 +27,38 @@ export function parsedBreakTimeStr(breakTime) {
     return msg;
 }
 
-export function audioBufObj(buffer) {
+export function audioBufObj(buffer, name = null, reportError = true) {
   return { 
     buffer: buffer,
-    timeoutID: null
+    timeoutID: null,
+    name: name,
+    reportError: reportError
   };
+}
+
+export function addSuffixToNum(num) {
+  const safeNum = Number(num);
+  const ones = Math.floor(safeNum % 10);
+  let prefix = '';
+  if (safeNum >= 11 && safeNum <= 19) {
+      prefix = 'th';
+  }
+  else {
+      switch (ones) {
+          case 1:
+              prefix = 'st';
+              break;
+          case 2:
+              prefix = 'nd';
+              break;
+          case 3:
+              prefix = 'rd';
+              break;
+          default:
+              prefix = 'th';
+              break;
+      }
+  }
+
+  return safeNum+prefix;
 }

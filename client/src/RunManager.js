@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import Countdown from './Countdown.js';
 import ParsedBreakTime from './ParsedBreakTime.js';
-import { parsedBreakTimeStr, audioBufObj } from './helpers.js';
+import { parsedBreakTimeStr, audioBufObj, addSuffixToNum } from './helpers.js';
 import './RunManager.css';
 import './workoutDisplay.css';
 
@@ -22,13 +22,18 @@ class RunManager extends Component {
       // Fix up for prefixing
       window.AudioContext = window.AudioContext||window.webkitAudioContext;
       context = new AudioContext();
+    }
+    catch(e) {
+      alert('Web Audio API is not supported in this browser');
+    }
 
+    if (context) {
       this.apiToken = null;
       this.apiTokenTime = 0;
       this.audioBufs = {
         localSrc: {
-          breakSound: audioBufObj(null),
-          breakStart: audioBufObj(null),
+          breakSound: audioBufObj(null, 'break time buzzer'),
+          breakStart: audioBufObj(null, 'break start announcement'),
         },
         remoteSrc: {
           sets: []
@@ -42,18 +47,14 @@ class RunManager extends Component {
         this.getAudioBuf(this.audioBufs.localSrc[soundType], RunManager.SRC_LOCAL, fileName);
       }
       for (let i = 0; i < this.props.baseWorkout.length; i++) {
-        this.audioBufs.remoteSrc.sets[i] = audioBufObj(null);
         const message = i === 0? `Running workout for ${this.props.exercise} with ${parsedBreakTimeStr(this.props.breakTime)} break time.` 
           : '';
-        const setType = i === this.props.baseWorkout.length - 1? 'Last' 
-          : i === 0? 'First'
-          : 'Next';
+        const setType = i === this.props.baseWorkout.length - 1? 'last' 
+          : addSuffixToNum(i+1);
         const numTries = i === 0? 0 : 5;
+        this.audioBufs.remoteSrc.sets[i] = audioBufObj(null, `${setType} set`);
         this.getAudioBuf(this.audioBufs.remoteSrc.sets[i], RunManager.SRC_TTS, `${message} ${setType} set: ${this.props.baseWorkout[i].reps} ${this.props.exercise}`, i === 0, numTries);
       }
-    }
-    catch(e) {
-      alert('Web Audio API is not supported in this browser');
     }
   }
 
@@ -63,7 +64,10 @@ class RunManager extends Component {
 
   verifyToken = () => {
     return new Promise((resolve, reject) => {
-      if (Date.now() - this.apiTokenTime >= 9*60*1000) { // >= 9 min as ms
+      if (!context) {
+        reject(new Error('audio web api unavailable. should not be attempting this'));
+      }
+      else if (Date.now() - this.apiTokenTime >= 9*60*1000) { // >= 9 min as ms
         axios.request({
           url: 'https://westus.api.cognitive.microsoft.com/sts/v1.0/issueToken',
           method: 'post',
@@ -90,9 +94,10 @@ class RunManager extends Component {
   // will attempt this at most @numTriesLeft times, after which it will fail silently.
   // if @shouldPlayAfter is true, will try to play the audio as soon as it's retrieved.
   // (@saveDest must be an object containing a 'buffer' property that's initialized to null)
-  getAudioBuf = (saveDest, source, content, shouldPlayAfter = false, numTriesLeft = 2) => {
+  getAudioBuf = (saveDest, source, content, shouldPlayAfter = false, numTriesLeft = 5) => {
     if (!context || saveDest.buffer || !content) return;
     
+    numTriesLeft--;
     let getBuf;
     switch(source) {
       case RunManager.SRC_TTS:
@@ -109,11 +114,10 @@ class RunManager extends Component {
         return;
     };
 
-    numTriesLeft--;
     getBuf.then(res => {
       saveDest.buffer = res;
       if (shouldPlayAfter) {
-        this.playAudioBufs([res]);
+        this.playAudioBufs([saveDest]);
       }
     }).catch(error => {
       console.log(error);
@@ -121,7 +125,16 @@ class RunManager extends Component {
         console.log('retrying with '+numTriesLeft+' tries left');
         saveDest.timeoutID = setTimeout(this.getAudioBuf, 10000, saveDest, source, content, false, numTriesLeft);
       }
-    });
+      if (shouldPlayAfter) {
+        this.playAudioBufs([saveDest]); //playAudioBufs will handle notifying user of error
+      }
+    }); 
+    /* if the edge browser ever supports .finally(), replace above shouldPlayAfter checks with this
+    .finally(() => {
+      if (shouldPlayAfter) {
+        this.playAudioBufs([saveDest]);
+    }});
+    */
   }
 
   // returns a promise containing the requested text-to-speech audio as an arraybuffer
@@ -160,39 +173,50 @@ class RunManager extends Component {
   }
 
   // recursively plays array of buffers in sequence, starting at index 0. skips empty buffers
-  playAudioBufs = (buffers) => {
-    if (buffers.length <= 0) return;
+  playAudioBufs = (sounds) => {
+    if (sounds.length <= 0) return;
 
-    let buffer = buffers.shift();
-    if (!buffer) {
-      //empty buffer, skip it
-      this.playAudioBufs(buffers);
-      return;
-    }
+    const snd = sounds.shift();
+    const buffer = snd.buffer;
+    const bufferCheck = new Promise((resolve, reject) => {
+      if (!buffer) {
+        reject(new Error('null buffer'));
+      } else {
+        resolve(buffer);
+    }})
 
-    context.decodeAudioData(buffer.slice()) //must operate on new copy of buffer since copy will be wiped later
+    bufferCheck.then(buffer => context.decodeAudioData(buffer.slice())) //must operate on new copy of buffer since copy will be wiped later
     .then(decodedBuf => {
       let source = context.createBufferSource(); // creates a sound source
       source.onended = function () {
-        this.playAudioBufs(buffers);
+        this.playAudioBufs(sounds);
       }.bind(this);
       source.buffer = decodedBuf;                // tell the source which sound to play
       source.connect(context.destination);       // connect the source to the context's destination (the speakers)
       source.start(0);
     })
-    .catch(error => console.log(error));
+    .catch(error => {
+      console.log(error);
+      clearTimeout(snd.timeoutID);
+      if (snd.reportError) {
+        this.props.addNotification(`Error: can't play the audio for the ${snd.name}.`, 'error');
+        snd.reportError = false;
+      }
+      this.playAudioBufs(sounds);
+    });
   }
 
   endSet = () => {
     if (this.state.currSetIndex === this.props.baseWorkout.length - 1) {
+      this.props.addNotification('Workout complete!', 'success', 3);
       this.props.toggleRun();
     }
     else {
       //start break time
-      let breakStartAudioBufs = [this.audioBufs.localSrc.breakSound.buffer]; //break start beep
+      let breakStartAudioBufs = [this.audioBufs.localSrc.breakSound]; //break start beep
       if (this.props.breakTime.min === 0 && this.props.breakTime.sec > 6) {
         //only include break start voiceover if it won't collide with the 5-sec break time countdown 
-        breakStartAudioBufs.push(this.audioBufs.localSrc.breakStart.buffer);
+        breakStartAudioBufs.push(this.audioBufs.localSrc.breakStart);
       }
       this.playAudioBufs(breakStartAudioBufs);
       this.setState((prevState) => ({
@@ -203,7 +227,7 @@ class RunManager extends Component {
   }
 
   endBreak = () => {
-    this.playAudioBufs([this.audioBufs.localSrc.breakSound.buffer, this.audioBufs.remoteSrc.sets[this.state.currSetIndex].buffer]);
+    this.playAudioBufs([this.audioBufs.localSrc.breakSound, this.audioBufs.remoteSrc.sets[this.state.currSetIndex]]);
     //this.apiTest(`Next set: ${this.props.baseWorkout[this.state.currSetIndex].reps} ${this.props.exercise}`);
     this.setState((prevState) => ({
       isBreakTime: false

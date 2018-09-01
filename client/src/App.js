@@ -61,7 +61,7 @@ class App extends Component {
     }
   }
 
-  _addNotification = (message, autoDismissSec=0, level='success') => {
+  _addNotification = (message, level='success', autoDismissSec=8) => {
     this._notificationSystem.current.addNotification({
       message: message,
       level: level,
@@ -180,7 +180,8 @@ Please fix and try again. Thanks!`);
         {isRunning? <RunManager baseWorkout={currentBaseWorkout} 
                                 exercise={exercise} 
                                 breakTime={this.parseTime(breakTime)} 
-                                toggleRun={this.toggleRun} /> :
+                                toggleRun={this.toggleRun} 
+                                addNotification={this._addNotification} /> :
                     <Editor baseWorkout={currentBaseWorkout}
                             breakTime={breakTime}
                             exercise={exercise}
