@@ -34,6 +34,7 @@ class RunManager extends Component {
         localSrc: {
           breakSound: audioBufObj(null, 'break time buzzer'),
           breakStart: audioBufObj(null, 'break start announcement'),
+          breakEndWarning: audioBufObj(null, 'break end warning'),
           countdown: [ audioBufObj(null) ]
         },
         remoteSrc: {
@@ -223,8 +224,8 @@ class RunManager extends Component {
     else {
       //start break time
       let breakStartAudioBufs = [this.audioBufs.localSrc.breakSound]; //break start beep
-      if (this.props.breakTime.min === 0 && this.props.breakTime.sec > 6) {
-        //only include break start voiceover if it won't collide with the 5-sec break time countdown 
+      if (this.props.breakTime.min === 0 && this.props.breakTime.sec > 6 && this.props.breakTime.sec !== 11) {
+        //only include break start voiceover if it won't collide with the 5-sec break time countdown or the 'Get ready' at the 10 sec mark
         breakStartAudioBufs.push(this.audioBufs.localSrc.breakStart);
       }
       this.playAudioBufs(breakStartAudioBufs);
@@ -233,6 +234,10 @@ class RunManager extends Component {
         currSetIndex: prevState.currSetIndex + 1
       }));
     }
+  }
+
+  announceWarning = () => {
+    this.playAudioBufs([this.audioBufs.localSrc.breakEndWarning]);
   }
 
   announceTick = (sec) => {
@@ -295,7 +300,8 @@ class RunManager extends Component {
                             <td>
                               <Countdown breakTime={this.props.breakTime} 
                                          endBreak={this.endBreak} 
-                                         announceTick={this.announceTick} />
+                                         announceTick={this.announceTick} 
+                                         announceWarning={this.announceWarning} />
                             </td> 
                             : null }
                         </tr>

@@ -44,14 +44,21 @@ class Countdown extends Component {
       else {
         currSec--;
       }
-  
+
       if (currMin === 0 && currSec === 0) {
         this.props.endBreak();
       }
       else {
-        if (currMin === 0 && currSec <= 5) {
-          this.props.announceTick(currSec);
+        //voiceover calls
+        if (currMin === 0) {
+          if (currSec <= 5) {
+            this.props.announceTick(currSec);
+          }
+          else if (currSec === 10) {
+            this.props.announceWarning();
+          }
         }
+        
         const newBreakTime = {
           min: currMin,
           sec: currSec
