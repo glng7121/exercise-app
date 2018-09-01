@@ -26,29 +26,30 @@ class RunManager extends Component {
       this.apiToken = null;
       this.apiTokenTime = 0;
       this.audioBufs = {
-        breakSound: audioBufObj(null),
-        breakStart: audioBufObj(null),
-        sets: []
+        localSrc: {
+          breakSound: audioBufObj(null),
+          breakStart: audioBufObj(null),
+        },
+        remoteSrc: {
+          sets: []
+        }
       };
       this.isPlaying = false;
 
       // get audio for workout announcements
-      fetch('/sounds/break-sound.wav')
-        .then(response => response.arrayBuffer())
-        .then(buffer => this.audioBufs.breakSound.buffer = buffer)
-        .then(() => fetch('/sounds/break-start.wav'))
-        .then(response => response.arrayBuffer())
-        .then(buffer => this.audioBufs.breakStart.buffer = buffer)
-        .catch(error => console.log(error));
-
+      for (let soundType in this.audioBufs.localSrc) {
+        const fileName = `${soundType.replace(/([A-Z])/g, ($1) => `-${$1.toLowerCase()}`)}.wav`;
+        this.getAudioBuf(this.audioBufs.localSrc[soundType], RunManager.SRC_LOCAL, fileName);
+      }
       for (let i = 0; i < this.props.baseWorkout.length; i++) {
-        this.audioBufs.sets[i] = audioBufObj(null);
+        this.audioBufs.remoteSrc.sets[i] = audioBufObj(null);
         const message = i === 0? `Running workout for ${this.props.exercise} with ${parsedBreakTimeStr(this.props.breakTime)} break time.` 
           : '';
         const setType = i === this.props.baseWorkout.length - 1? 'Last' 
           : i === 0? 'First'
           : 'Next';
-        this.getApiAudioBuf(this.audioBufs.sets[i], `${message} ${setType} set: ${this.props.baseWorkout[i].reps} ${this.props.exercise}`, i === 0);
+        const numTries = i === 0? 0 : 5;
+        this.getAudioBuf(this.audioBufs.remoteSrc.sets[i], RunManager.SRC_TTS, `${message} ${setType} set: ${this.props.baseWorkout[i].reps} ${this.props.exercise}`, i === 0, numTries);
       }
     }
     catch(e) {
@@ -61,7 +62,7 @@ class RunManager extends Component {
   }
 
   verifyToken = () => {
-    return new Promise(function (resolve, reject) {
+    return new Promise((resolve, reject) => {
       if (Date.now() - this.apiTokenTime >= 9*60*1000) { // >= 9 min as ms
         axios.request({
           url: 'https://westus.api.cognitive.microsoft.com/sts/v1.0/issueToken',
@@ -82,15 +83,49 @@ class RunManager extends Component {
         console.log('cached api token');
         resolve();
       }
-    }.bind(this));
+    });
   }
 
-  // retrieves and saves the requested audio message into saveDest's 'buffer' property.
-  // if shouldPlayAfter is true, will try to play the audio as soon as it's retrieved.
-  // (saveDest must be an object containing a 'buffer' property that's initialized to null)
-  getApiAudioBuf = (saveDest, message, shouldPlayAfter = false) => {
-    if (!context || saveDest.buffer || !message) return;
+  // retrieves and saves the requested audio message into @saveDest's 'buffer' property.
+  // will attempt this at most @numTriesLeft times, after which it will fail silently.
+  // if @shouldPlayAfter is true, will try to play the audio as soon as it's retrieved.
+  // (@saveDest must be an object containing a 'buffer' property that's initialized to null)
+  getAudioBuf = (saveDest, source, content, shouldPlayAfter = false, numTriesLeft = 2) => {
+    if (!context || saveDest.buffer || !content) return;
     
+    let getBuf;
+    switch(source) {
+      case RunManager.SRC_TTS:
+        getBuf = this.getApiAudioBuf(content);
+        break;
+      case RunManager.SRC_LOCAL:
+        getBuf = new Promise((resolve, reject) => {
+          fetch(`/sounds/${content}`)
+          .then(response => resolve(response.arrayBuffer()))
+          .catch(error => reject(error));
+        });
+        break;
+      default:
+        return;
+    };
+
+    numTriesLeft--;
+    getBuf.then(res => {
+      saveDest.buffer = res;
+      if (shouldPlayAfter) {
+        this.playAudioBufs([res]);
+      }
+    }).catch(error => {
+      console.log(error);
+      if (numTriesLeft >= 1) {
+        console.log('retrying with '+numTriesLeft+' tries left');
+        saveDest.timeoutID = setTimeout(this.getAudioBuf, 10000, saveDest, source, content, false, numTriesLeft);
+      }
+    });
+  }
+
+  // returns a promise containing the requested text-to-speech audio as an arraybuffer
+  getApiAudioBuf = (message) => {
     const ssmlDoc = xmlbuilder.create('speak')
       .att('version', '1.0')
       .att('xml:lang', 'en-us')
@@ -102,31 +137,29 @@ class RunManager extends Component {
       .end();
     const speakData = ssmlDoc.toString();
 
-    this.verifyToken().then(() => 
-      axios.request({
-        url: 'https://westus.tts.speech.microsoft.com/cognitiveservices/v1',
-        method: 'post',
-        headers: {
-          'Authorization': 'Bearer ' + this.apiToken,
-          'Content-Type': 'application/ssml+xml',
-          'X-Microsoft-OutputFormat': 'riff-24khz-16bit-mono-pcm',
-          'X-Search-AppId': '07D3234E49CE426DAA29772419F436CA',
-          'X-Search-ClientID': '1ECFAE91408841A480F00935DC390960',
-        },
-        data: speakData,
-        responseType: 'arraybuffer'
+    return new Promise((resolve, reject) => {
+      this.verifyToken().then(() => 
+        axios.request({
+          url: 'https://westus.tts.speech.microsoft.com/cognitiveservices/v1',
+          method: 'post',
+          headers: {
+            'Authorization': 'Bearer ' + this.apiToken,
+            'Content-Type': 'application/ssml+xml',
+            'X-Microsoft-OutputFormat': 'riff-24khz-16bit-mono-pcm',
+            'X-Search-AppId': '07D3234E49CE426DAA29772419F436CA',
+            'X-Search-ClientID': '1ECFAE91408841A480F00935DC390960',
+          },
+          data: speakData,
+          responseType: 'arraybuffer'
+      }))
+      .then(response => {
+        resolve(response.data);
       })
-    )
-    .then(response => {
-      saveDest.buffer = response.data;
-      if (shouldPlayAfter) {
-        this.playAudioBufs([response.data]);
-      }
-    })
-    .catch(error => console.log(error));
+      .catch(error => reject(error));
+    });
   }
 
-  //recursively plays array of buffers in sequence, starting at index 0. skips empty buffers
+  // recursively plays array of buffers in sequence, starting at index 0. skips empty buffers
   playAudioBufs = (buffers) => {
     if (buffers.length <= 0) return;
 
@@ -156,10 +189,10 @@ class RunManager extends Component {
     }
     else {
       //start break time
-      let breakStartAudioBufs = [this.audioBufs.breakSound.buffer]; //break start beep
+      let breakStartAudioBufs = [this.audioBufs.localSrc.breakSound.buffer]; //break start beep
       if (this.props.breakTime.min === 0 && this.props.breakTime.sec > 6) {
         //only include break start voiceover if it won't collide with the 5-sec break time countdown 
-        breakStartAudioBufs.push(this.audioBufs.breakStart.buffer);
+        breakStartAudioBufs.push(this.audioBufs.localSrc.breakStart.buffer);
       }
       this.playAudioBufs(breakStartAudioBufs);
       this.setState((prevState) => ({
@@ -170,13 +203,7 @@ class RunManager extends Component {
   }
 
   endBreak = () => {
-    const nextSetBuf = this.audioBufs.sets[this.state.currSetIndex].buffer;
-    if (nextSetBuf) {
-      this.playAudioBufs([this.audioBufs.breakSound.buffer, this.audioBufs.sets[this.state.currSetIndex].buffer]);
-    }
-    else {
-      console.log(`Error: set ${this.state.currSetIndex} doesn't have an audio buffer. Skipping its audio`);
-    }
+    this.playAudioBufs([this.audioBufs.localSrc.breakSound.buffer, this.audioBufs.remoteSrc.sets[this.state.currSetIndex].buffer]);
     //this.apiTest(`Next set: ${this.props.baseWorkout[this.state.currSetIndex].reps} ${this.props.exercise}`);
     this.setState((prevState) => ({
       isBreakTime: false
@@ -245,5 +272,7 @@ class RunManager extends Component {
 }
 
 RunManager.API_KEY = '10c95f8e063d489fbb2bb70346bf07af';
+RunManager.SRC_TTS = 'text to speech api source';
+RunManager.SRC_LOCAL = 'local server source';
 
 export default RunManager;

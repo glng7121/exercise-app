@@ -28,5 +28,8 @@ export function parsedBreakTimeStr(breakTime) {
 }
 
 export function audioBufObj(buffer) {
-  return { 'buffer': buffer };
+  return { 
+    buffer: buffer,
+    timeoutID: null
+  };
 }

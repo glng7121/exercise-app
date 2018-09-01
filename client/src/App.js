@@ -122,7 +122,7 @@ Please fix and try again. Thanks!`);
       return;
     }
     else {
-      this._addNotification('testing, heres a long message. wowiewflkadsf \n so sweeeeet omg');
+      //this._addNotification('testing, heres a long message. wowiewflkadsf \n so sweeeeet omg');
       this.setState((prevState) => ({
         isRunning: !prevState.isRunning
       }), () => {
