@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { isBreakTimeZero } from './helpers.js';
 
 class Countdown extends Component {
     state = {
@@ -8,7 +9,7 @@ class Countdown extends Component {
   
     constructor(props) {
       super(props);
-      if (this.isBreakTimeZero(this.props.breakTime)) {
+      if (isBreakTimeZero(this.props.breakTime)) {
         this.props.endBreak();
       }
       else {
@@ -67,10 +68,6 @@ class Countdown extends Component {
           currBreakTime: newBreakTime
         }));
       }
-    }
-  
-    isBreakTimeZero = (breakTime) => {
-      return breakTime.min === 0 && breakTime.sec === 0;
     }
 
     isLastFiveSec = (breakTime) => {

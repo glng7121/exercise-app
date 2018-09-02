@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import Countdown from './Countdown.js';
 import ParsedBreakTime from './ParsedBreakTime.js';
-import { parsedBreakTimeStr, audioBufObj, addSuffixToNum } from './helpers.js';
+import { parsedBreakTimeStr, audioBufObj, addSuffixToNum, isBreakTimeZero } from './helpers.js';
 import './RunManager.css';
 import './workoutDisplay.css';
 
@@ -24,9 +24,9 @@ class RunManager extends Component {
       context = new AudioContext();
     }
     catch(e) {
-      alert('Web Audio API is not supported in this browser');
+      this.props.addNotification('Web Audio API is not supported in this browser. Audio has been disabled. Try the latest versions of Chrome, Firefox, or Edge.', 'info', 5);
     }
-
+    
     if (context) {
       this.apiToken = null;
       this.apiTokenTime = 0;
@@ -223,7 +223,11 @@ class RunManager extends Component {
     }
     else {
       //start break time
-      let breakStartAudioBufs = [this.audioBufs.localSrc.breakSound]; //break start beep
+      let breakStartAudioBufs = [];
+      if (!isBreakTimeZero(this.props.breakTime)) {
+        //only include break start buzzer if it won't collide with the break end buzzer after a 0 break
+        breakStartAudioBufs.push(this.audioBufs.localSrc.breakSound);
+      }
       if (this.props.breakTime.min === 0 && this.props.breakTime.sec > 6 && this.props.breakTime.sec !== 11) {
         //only include break start voiceover if it won't collide with the 5-sec break time countdown or the 'Get ready' at the 10 sec mark
         breakStartAudioBufs.push(this.audioBufs.localSrc.breakStart);

@@ -62,3 +62,7 @@ export function addSuffixToNum(num) {
 
   return safeNum+prefix;
 }
+
+export function isBreakTimeZero(breakTime) {
+  return breakTime.min === 0 && breakTime.sec === 0;
+}
