@@ -56,14 +56,14 @@ class RunManager extends Component {
           this.getAudioBuf(this.audioBufs.localSrc[soundType], RunManager.SRC_LOCAL, fileName);
         }
       }
-      for (let i = 0; i < this.props.baseWorkout.length; i++) {
+      for (let i = 0; i < this.props.workoutSets.length; i++) {
         const message = i === 0? `Running workout for ${this.props.exercise} with ${parsedBreakTimeStr(this.props.breakTime)} break time.` 
           : '';
-        const setType = i === this.props.baseWorkout.length - 1? 'last' 
+        const setType = i === this.props.workoutSets.length - 1? 'last' 
           : addSuffixToNum(i+1);
         const numTries = i === 0? 0 : 5;
         this.audioBufs.remoteSrc.sets[i] = audioBufObj(null, `${setType} set`);
-        this.getAudioBuf(this.audioBufs.remoteSrc.sets[i], RunManager.SRC_TTS, `${message} ${setType} set: ${this.props.baseWorkout[i].reps} ${this.props.exercise}`, i === 0, numTries);
+        this.getAudioBuf(this.audioBufs.remoteSrc.sets[i], RunManager.SRC_TTS, `${message} ${setType} set: ${this.props.workoutSets[i].reps} ${this.props.exercise}`, i === 0, numTries);
       }
     }
   }
@@ -217,7 +217,7 @@ class RunManager extends Component {
   }
 
   endSet = () => {
-    if (this.state.currSetIndex === this.props.baseWorkout.length - 1) {
+    if (this.state.currSetIndex === this.props.workoutSets.length - 1) {
       this.props.addNotification('Workout complete!', 'success', 3);
       this.props.toggleRun();
     }
@@ -251,7 +251,7 @@ class RunManager extends Component {
 
   endBreak = () => {
     this.playAudioBufs([this.audioBufs.localSrc.breakSound, this.audioBufs.remoteSrc.sets[this.state.currSetIndex]]);
-    //this.apiTest(`Next set: ${this.props.baseWorkout[this.state.currSetIndex].reps} ${this.props.exercise}`);
+    //this.apiTest(`Next set: ${this.props.workoutSets[this.state.currSetIndex].reps} ${this.props.exercise}`);
     this.setState((prevState) => ({
       isBreakTime: false
     }))
@@ -289,7 +289,7 @@ class RunManager extends Component {
                     </thead>
                     <tbody>
                       
-                    {this.props.baseWorkout.map((set, i) => 
+                    {this.props.workoutSets.map((set, i) => 
                         <tr key={set.key}>
                           <td> {`${i+1})`} </td>
                           <td>

@@ -12,7 +12,7 @@ class Editor extends Component {
       }
 
       let initialSetRefs = [React.createRef()]; //workout will always have at least 1 set ref
-      for (let i = 1; i < this.props.baseWorkout.length; i++) {
+      for (let i = 1; i < this.props.workoutSets.length; i++) {
         initialSetRefs.push(React.createRef());
       }
       this.state = { 
@@ -76,7 +76,7 @@ class Editor extends Component {
 
     handleDeleteSet_wrapper = (index) => {
       return () => {
-        if (this.props.baseWorkout.length === 1) return; //workout must always have at least 1 set
+        if (this.props.workoutSets.length === 1) return; //workout must always have at least 1 set
         const refs = this.state.setRefs;
         refs.splice(index, 1);
         this.setState({ setRefs: refs }, () => {
@@ -91,8 +91,8 @@ class Editor extends Component {
       };
     }
 
-    discardWorkout = () => {
-      this.props.discardWorkout();
+    discardAllSets = () => {
+      this.props.discardAllSets();
       //manually change setup fields because they won't respond to app's state changing.
       //could fix by propagating app's state to editor, todo later maybe?
       this.setupRefs[Editor.EXER_IND].current.value = '';
@@ -110,7 +110,7 @@ class Editor extends Component {
               <tbody>
                 <tr>
                   <td className='button-menu'>
-                    <button onClick={this.discardWorkout}> Discard Workout </button>
+                    <button onClick={this.discardAllSets}> Discard Workout </button>
                     
                   </td>
                 </tr>
@@ -155,7 +155,7 @@ class Editor extends Component {
                               </thead>
                               <tbody>
                                 
-                              {this.props.baseWorkout.map((set, i) => 
+                              {this.props.workoutSets.map((set, i) => 
                                   <tr key={set.key}>
                                     <td> {`${i+1})`} </td>
                                     <td>
@@ -166,7 +166,7 @@ class Editor extends Component {
                                     </td>
                                     <td>
                                         <button className='set-button' onClick={this.handleDeleteSet_wrapper(i)}
-                                                disabled={i === 0 && this.props.baseWorkout.length === 1? true : false}> 
+                                                disabled={i === 0 && this.props.workoutSets.length === 1? true : false}> 
                                         Delete 
                                         </button>
                                     </td>

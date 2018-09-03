@@ -43,7 +43,10 @@ function RunButton(props) {
 
 class App extends Component {
   state = {
-    currentBaseWorkout: workout_test, //App.generateInitWorkout(), //workout_test,
+    //currentBaseWorkout: workout_test, //App.generateInitWorkout(), //workout_test,
+    currWorkoutID: 0,
+    maxWorkoutID: 0,
+    workouts: new Map([[0, App.generateWorkout(undefined, workout_test)]]),
     exercise: 'pushups', //null,
     breakTime: new Time(0, 3), //new Time(null, null), 
     isRunning: false
@@ -69,8 +72,11 @@ class App extends Component {
     });
   }
 
-  static generateInitWorkout = () => {
-    return [new Set('')];
+  static generateWorkout = (name = (new Date()).toString(), sets = [new Set('')]) => {
+    return {
+      name: name,
+      sets: sets
+    };
   }
 
   /*
@@ -79,26 +85,45 @@ class App extends Component {
   }
   */
 
+  // returns a deep clone of the requested workout
+  getDeepWorkoutClone = (key) => {
+    const workout = this.state.workouts.get(this.state.currWorkoutID);
+    if (!workout) return null;
+    return App.generateWorkout(workout.name, workout.sets.map(s => Object.assign({}, s))); //essentially deep clones the workout
+  }
+
+  // updates the requested workout entry in a deep map clone of workouts, and returns the clone.
+  // should be used to update the workouts state (as opposed to updating workouts state directly via unintentional referencing. GG me)
+  updatedWorkouts = (key, newWorkout) => {
+    if (!this.state.workouts.has(key)) return null;
+    const oldWorkouts = new Map(this.state.workouts); //shallow map clone
+    oldWorkouts.set(key, newWorkout);
+    return oldWorkouts;
+  }
+
   updateSet = (event, index) => {
-    const workout = this.state.currentBaseWorkout;
-    workout[index].reps = event.target.value;
-    this.setState({ currentBaseWorkout: workout });
+    const workout = this.getDeepWorkoutClone(this.state.currWorkoutID);
+    if (!workout) return;
+    workout.sets[index].reps = event.target.value;
+    this.setState({ workouts: this.updatedWorkouts(this.state.currWorkoutID, workout) });
   }
 
   addEmptySet = (index) => {
-    const workout = this.state.currentBaseWorkout;
-    workout.splice(index, 0, new Set('', ''));
-    this.setState({ currentBaseWorkout: workout});
+    const workout = this.getDeepWorkoutClone(this.state.currWorkoutID);
+    if (!workout) return;
+    workout.sets.splice(index, 0, new Set('', ''));
+    this.setState({ workouts: this.updatedWorkouts(this.state.currWorkoutID, workout) });
   }
 
   deleteSet = (index) => {
-    const workout = this.state.currentBaseWorkout;
-    workout.splice(index, 1);
-    this.setState({ currentBaseWorkout: workout});
+    const workout = this.getDeepWorkoutClone(this.state.currWorkoutID);
+    if (!workout) return;
+    workout.sets.splice(index, 1);
+    this.setState({ workouts: this.updatedWorkouts(this.state.currWorkoutID, workout) });
   }
 
   isWorkoutInvalid = (workout) => {
-    return workout.find((set) => !set.reps || isNaN(Number(set.reps)) || Number(set.reps) < 0);
+    return workout.sets.find((set) => !set.reps || isNaN(Number(set.reps)) || Number(set.reps) < 0);
   }
 
   isBreakTimeValid = (breakTime) => {
@@ -114,7 +139,9 @@ class App extends Component {
   }
 
   toggleRun = () => {
-    if (!this.state.isRunning && (!this.state.exercise || !this.isBreakTimeValid(this.state.breakTime) || this.isWorkoutInvalid(this.state.currentBaseWorkout))) {
+    if (!this.state.isRunning && (!this.state.exercise 
+                                  || !this.isBreakTimeValid(this.state.breakTime) 
+                                  || this.isWorkoutInvalid(this.state.workouts.get(this.state.currWorkoutID)))) {
       alert(`Error: at least one field is invalid. Please note that...
       1. All set fields, the exercise field, and at least one break time field should be filled. 
       2. All numbers should be >= 0. 
@@ -162,27 +189,32 @@ Please fix and try again. Thanks!`);
     };
   }
 
-  discardWorkout = () => {
+  discardAllSets = () => {
+    const oldWorkout = this.state.workouts.get(this.state.currWorkoutID);
+    if (!oldWorkout) return;
+    const workout = App.generateWorkout(oldWorkout.name); //keep workout name
     this.setState({
-      currentBaseWorkout: App.generateInitWorkout(),
+      workouts: this.updatedWorkouts(this.state.currWorkoutID, workout),
       exercise: null,
       breakTime: new Time(null, null)
     });
   }
 
   render() {
-    const { currentBaseWorkout, exercise, breakTime, isRunning } = this.state;
+    const { workouts, currWorkoutID, exercise, breakTime, isRunning } = this.state;
+    const currWorkout = workouts.get(currWorkoutID);
+    const currSets = currWorkout? currWorkout.sets : App.generateWorkout().sets;
     return (
       <div id='appComponent'>
         <h2> 
           {isRunning? 'Currently running workout...' : 'Edit your workout!' }
         </h2>
-        {isRunning? <RunManager baseWorkout={currentBaseWorkout} 
+        {isRunning? <RunManager workoutSets={currSets} 
                                 exercise={exercise} 
                                 breakTime={this.parseTime(breakTime)} 
                                 toggleRun={this.toggleRun} 
                                 addNotification={this._addNotification} /> :
-                    <Editor baseWorkout={currentBaseWorkout}
+                    <Editor workoutSets={currSets}
                             breakTime={breakTime}
                             exercise={exercise}
                             updateExercise={this.updateExercise}
@@ -191,7 +223,7 @@ Please fix and try again. Thanks!`);
                             updateSet={this.updateSet} 
                             addEmptySetToBase={this.addEmptySet} 
                             deleteSet={this.deleteSet} 
-                            discardWorkout={this.discardWorkout} /> }
+                            discardAllSets={this.discardAllSets} /> }
         <RunButton isRunning={isRunning}
                    toggleRun={this.toggleRun} />
         <NotificationSystem ref={this._notificationSystem} style={this.notifStyles} />
