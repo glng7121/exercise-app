@@ -89,7 +89,7 @@ class App extends Component {
   getDeepWorkoutClone = (key) => {
     const workout = this.state.workouts.get(this.state.currWorkoutID);
     if (!workout) return null;
-    return App.generateWorkout(workout.name, workout.sets.map(s => Object.assign({}, s))); //essentially deep clones the workout
+    return App.generateWorkout(workout.name, workout.exercise, new Time(workout.breakTime.min, workout.breakTime.sec), workout.sets.map(s => Object.assign({}, s))); //essentially deep clones the workout
   }
 
   // updates the requested workout entry in a deep map clone of workouts, and returns the clone.
