@@ -46,9 +46,7 @@ class App extends Component {
     //currentBaseWorkout: workout_test, //App.generateInitWorkout(), //workout_test,
     currWorkoutID: 0,
     maxWorkoutID: 0,
-    workouts: new Map([[0, App.generateWorkout(undefined, workout_test)]]),
-    exercise: 'pushups', //null,
-    breakTime: new Time(0, 3), //new Time(null, null), 
+    workouts: new Map([[0, App.generateWorkout(undefined, 'pushups', new Time(0, 3), workout_test)]]),
     isRunning: false
   }
 
@@ -72,9 +70,11 @@ class App extends Component {
     });
   }
 
-  static generateWorkout = (name = (new Date()).toString(), sets = [new Set('')]) => {
+  static generateWorkout = (name=(new Date()).toString(), exercise=null, breakTime=new Time(null, null), sets=[new Set('')]) => {
     return {
       name: name,
+      exercise: exercise,
+      breakTime: breakTime,
       sets: sets
     };
   }
@@ -123,7 +123,7 @@ class App extends Component {
   }
 
   isWorkoutInvalid = (workout) => {
-    return workout.sets.find((set) => !set.reps || isNaN(Number(set.reps)) || Number(set.reps) < 0);
+    return !workout || workout.sets.find((set) => !set.reps || isNaN(Number(set.reps)) || Number(set.reps) < 0);
   }
 
   isBreakTimeValid = (breakTime) => {
@@ -139,9 +139,10 @@ class App extends Component {
   }
 
   toggleRun = () => {
-    if (!this.state.isRunning && (!this.state.exercise 
-                                  || !this.isBreakTimeValid(this.state.breakTime) 
-                                  || this.isWorkoutInvalid(this.state.workouts.get(this.state.currWorkoutID)))) {
+    const workout = this.state.workouts.get(this.state.currWorkoutID);
+    if (!this.state.isRunning && (this.isWorkoutInvalid(workout)
+                                  || !workout.exercise
+                                  || !this.isBreakTimeValid(workout.breakTime))) {
       alert(`Error: at least one field is invalid. Please note that...
       1. All set fields, the exercise field, and at least one break time field should be filled. 
       2. All numbers should be >= 0. 
@@ -159,14 +160,19 @@ Please fix and try again. Thanks!`);
   }
 
   updateExercise = (event) => {
+    const workout = this.getDeepWorkoutClone(this.state.currWorkoutID);
+    if (!workout) return;
+    workout.exercise = event.target.value;
     this.setState({
-      exercise: event.target.value
+      workouts: this.updatedWorkouts(this.state.currWorkoutID, workout)
     });
   }
 
   updateBreakTime_wrapper = (unit) => {
     return (event) => {
-      const newBreakTime = this.state.breakTime;
+      const workout = this.getDeepWorkoutClone(this.state.currWorkoutID);
+      if (!workout) return;
+      const newBreakTime = workout.breakTime;
       const newUnitStr = event.target.value;
       const newUnit = Number(newUnitStr);
 
@@ -184,7 +190,7 @@ Please fix and try again. Thanks!`);
       }
 
       this.setState({
-        breakTime: newBreakTime
+        workouts: this.updatedWorkouts(this.state.currWorkoutID, workout)
       });
     };
   }
@@ -201,9 +207,11 @@ Please fix and try again. Thanks!`);
   }
 
   render() {
-    const { workouts, currWorkoutID, exercise, breakTime, isRunning } = this.state;
+    const { workouts, currWorkoutID, isRunning } = this.state;
     const currWorkout = workouts.get(currWorkoutID);
     const currSets = currWorkout? currWorkout.sets : App.generateWorkout().sets;
+    const exercise = currWorkout? currWorkout.exercise : '';
+    const breakTime = currWorkout? currWorkout.breakTime : '';
     return (
       <div id='appComponent'>
         <h2> 
