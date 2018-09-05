@@ -1,37 +1,24 @@
 import React, { Component } from 'react';
 import Editor from './Editor.js';
 import RunManager from './RunManager.js';
+import { storageAvailable } from './helpers.js';
 import './App.css';
 
 const NotificationSystem = require('react-notification-system');
-
-//id function from https://stackoverflow.com/a/43963612
-const id = (() => {
-  let currentId = 0;
-  const map = new WeakMap();
-
-  return (object) => {
-      if (!map.has(object)) {
-          map.set(object, ++currentId);
-      }
-
-      return map.get(object);
-  };
-})();
 
 function Time(min, sec) {
   this.min = min;
   this.sec = sec;
 }
 
-function Set(reps) {
-  this.key = id(this);
+function Set(id, reps) {
+  this.key = id;
   this.reps = reps;
 }
 
-let workout_test = [new Set('25'), 
-                    new Set('30'),
-                    new Set('45')];
+let workout_test = [new Set(0, '25'), 
+                    new Set(1, '30'),
+                    new Set(2, '45')];
 
 function RunButton(props) {
   return (
@@ -42,16 +29,15 @@ function RunButton(props) {
 }
 
 class App extends Component {
-  state = {
-    //currentBaseWorkout: workout_test, //App.generateInitWorkout(), //workout_test,
-    currWorkoutID: 0,
-    maxWorkoutID: 0,
-    workouts: new Map([[0, App.generateWorkout(undefined, 'pushups', new Time(0, 3), workout_test)]]),
-    isRunning: false
-  }
-
   constructor(props) {
     super(props);
+    this.state = {
+      //currentBaseWorkout: workout_test, //App.generateInitWorkout(), //workout_test,
+      currWorkoutID: 0,
+      maxWorkoutID: 0,
+      workouts: this.tryWorkoutsFromStorage(),
+      isRunning: false
+    }
     this._notificationSystem = React.createRef();
     this.notifStyles = {
       NotificationItem: { // Override the notification item
@@ -59,6 +45,30 @@ class App extends Component {
           fontSize: '4vw'
         }
       }
+    }
+  }
+
+  componentDidMount(){
+    window.addEventListener('beforeunload', this.populateWorkoutsStorage);
+  }
+
+  componentWillUnmount = () => {
+    //store workouts into local storage
+    window.removeEventListener('beforeunload', this.populateWorkoutsStorage);
+  }
+
+  tryWorkoutsFromStorage() {
+    let storedWorkouts;
+    if (storageAvailable('localStorage') && (storedWorkouts = localStorage.getItem(App.STORAGE_KEY_WORKOUTS))) {
+      return new Map(JSON.parse(storedWorkouts));
+    } else {
+      return new Map([[0, App.generateWorkout(undefined, 'pushups', new Time(0, 3), workout_test.length, workout_test)]]);
+    }
+  }
+
+  populateWorkoutsStorage = () => {
+    if (storageAvailable('localStorage')) {
+      localStorage.setItem(App.STORAGE_KEY_WORKOUTS, JSON.stringify(Array.from(this.state.workouts.entries())));
     }
   }
 
@@ -70,11 +80,12 @@ class App extends Component {
     });
   }
 
-  static generateWorkout = (name=(new Date()).toString(), exercise=null, breakTime=new Time(null, null), sets=[new Set('')]) => {
+  static generateWorkout = (name=(new Date()).toString(), exercise=null, breakTime=new Time(null, null), nextSetId=1, sets=[new Set(0, '')]) => {
     return {
       name: name,
       exercise: exercise,
       breakTime: breakTime,
+      nextSetId: nextSetId,
       sets: sets
     };
   }
@@ -89,7 +100,11 @@ class App extends Component {
   getDeepWorkoutClone = (key) => {
     const workout = this.state.workouts.get(this.state.currWorkoutID);
     if (!workout) return null;
-    return App.generateWorkout(workout.name, workout.exercise, new Time(workout.breakTime.min, workout.breakTime.sec), workout.sets.map(s => Object.assign({}, s))); //essentially deep clones the workout
+    return App.generateWorkout(workout.name, 
+      workout.exercise, 
+      new Time(workout.breakTime.min, workout.breakTime.sec), 
+      workout.nextSetId, 
+      workout.sets.map(s => Object.assign({}, s))); //essentially deep clones the workout
   }
 
   // updates the requested workout entry in a deep map clone of workouts, and returns the clone.
@@ -111,7 +126,8 @@ class App extends Component {
   addEmptySet = (index) => {
     const workout = this.getDeepWorkoutClone(this.state.currWorkoutID);
     if (!workout) return;
-    workout.sets.splice(index, 0, new Set('', ''));
+    workout.sets.splice(index, 0, new Set(workout.nextSetId, ''));
+    workout.nextSetId++;
     this.setState({ workouts: this.updatedWorkouts(this.state.currWorkoutID, workout) });
   }
 
@@ -242,5 +258,6 @@ Please fix and try again. Thanks!`);
 
 App.ID_MIN = 'id min';
 App.ID_SEC = 'id sec';
+App.STORAGE_KEY_WORKOUTS = 'workouts';
 
 export default App;
