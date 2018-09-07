@@ -91,3 +91,8 @@ export function storageAvailable(type) {
           storage.length !== 0;
   }
 }
+
+export function Time(min, sec) {
+  this.min = min;
+  this.sec = sec;
+}

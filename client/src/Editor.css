@@ -7,7 +7,11 @@
     margin: 0 auto;
 }
 
-.number-field {
+#nameField {
+    width: 65vw;
+}
+
+#editorComponent .number-field {
     max-width: 15vw;
 }
 
@@ -16,7 +20,7 @@
     width: 35vw;
 }
 
-.button-menu {
+#editorComponent .button-menu {
     margin: 0;
     padding: 2vw;
 }

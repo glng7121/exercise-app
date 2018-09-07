@@ -1,15 +1,10 @@
 import React, { Component } from 'react';
 import Editor from './Editor.js';
 import RunManager from './RunManager.js';
-import { storageAvailable } from './helpers.js';
+import { Time, storageAvailable } from './helpers.js';
 import './App.css';
 
 const NotificationSystem = require('react-notification-system');
-
-function Time(min, sec) {
-  this.min = min;
-  this.sec = sec;
-}
 
 function Set(id, reps) {
   this.key = id;
@@ -33,8 +28,8 @@ class App extends Component {
     super(props);
     this.state = {
       //currentBaseWorkout: workout_test, //App.generateInitWorkout(), //workout_test,
-      currWorkoutID: 0,
-      maxWorkoutID: 0,
+      currWorkoutID: this.tryCurrWorkoutIdFromStorage(),
+      nextWorkoutID: this.tryNextWorkoutIdFromStorage(),
       workouts: this.tryWorkoutsFromStorage(),
       isRunning: false
     }
@@ -57,18 +52,38 @@ class App extends Component {
     window.removeEventListener('beforeunload', this.populateWorkoutsStorage);
   }
 
+  tryCurrWorkoutIdFromStorage() {
+    let currWorkoutID;
+    if (storageAvailable('localStorage') && (currWorkoutID = localStorage.getItem(App.STORAGE_KEY_CURR_WORKOUT_ID))) {
+      return JSON.parse(currWorkoutID);
+    } else {
+      return 0;
+    }
+  }
+
+  tryNextWorkoutIdFromStorage() {
+    let nextWorkoutID;
+    if (storageAvailable('localStorage') && (nextWorkoutID = localStorage.getItem(App.STORAGE_KEY_NEXT_WORKOUT_ID))) {
+      return JSON.parse(nextWorkoutID);
+    } else {
+      return 1;
+    }
+  }
+
   tryWorkoutsFromStorage() {
     let storedWorkouts;
     if (storageAvailable('localStorage') && (storedWorkouts = localStorage.getItem(App.STORAGE_KEY_WORKOUTS))) {
       return new Map(JSON.parse(storedWorkouts));
     } else {
-      return new Map([[0, App.generateWorkout(undefined, 'pushups', new Time(0, 3), workout_test.length, workout_test)]]);
+      return new Map([[0, this.generateWorkout()]]); //this.generateWorkout(undefined, 'pushups', new Time(0, 3), workout_test.length, workout_test)]]);
     }
   }
 
   populateWorkoutsStorage = () => {
     if (storageAvailable('localStorage')) {
       localStorage.setItem(App.STORAGE_KEY_WORKOUTS, JSON.stringify(Array.from(this.state.workouts.entries())));
+      localStorage.setItem(App.STORAGE_KEY_CURR_WORKOUT_ID, JSON.stringify(this.state.currWorkoutID));
+      localStorage.setItem(App.STORAGE_KEY_NEXT_WORKOUT_ID, JSON.stringify(this.state.nextWorkoutID));
     }
   }
 
@@ -80,27 +95,11 @@ class App extends Component {
     });
   }
 
-  static generateWorkout = (name=(new Date()).toString(), exercise=null, breakTime=new Time(null, null), nextSetId=1, sets=[new Set(0, '')]) => {
-    return {
-      name: name,
-      exercise: exercise,
-      breakTime: breakTime,
-      nextSetId: nextSetId,
-      sets: sets
-    };
-  }
-
-  /*
-  insertBreaks = (baseWorkout) => {
-    return baseWorkout.reduce((res, curr) => res.concat(curr, new Set(`${this.state.breakTime} seconds`, 'break')), []);
-  }
-  */
-
   // returns a deep clone of the requested workout
   getDeepWorkoutClone = (key) => {
     const workout = this.state.workouts.get(this.state.currWorkoutID);
     if (!workout) return null;
-    return App.generateWorkout(workout.name, 
+    return this.generateWorkout(workout.name, 
       workout.exercise, 
       new Time(workout.breakTime.min, workout.breakTime.sec), 
       workout.nextSetId, 
@@ -110,7 +109,6 @@ class App extends Component {
   // updates the requested workout entry in a deep map clone of workouts, and returns the clone.
   // should be used to update the workouts state (as opposed to updating workouts state directly via unintentional referencing. GG me)
   updatedWorkouts = (key, newWorkout) => {
-    if (!this.state.workouts.has(key)) return null;
     const oldWorkouts = new Map(this.state.workouts); //shallow map clone
     oldWorkouts.set(key, newWorkout);
     return oldWorkouts;
@@ -136,6 +134,32 @@ class App extends Component {
     if (!workout) return;
     workout.sets.splice(index, 1);
     this.setState({ workouts: this.updatedWorkouts(this.state.currWorkoutID, workout) });
+  }
+
+  addEmptyWorkout = () => {
+    const emptyWorkout = this.generateWorkout();
+    const nextWorkoutID = this.state.nextWorkoutID;
+    this.setState({ 
+      workouts: this.updatedWorkouts(nextWorkoutID, emptyWorkout),
+      currWorkoutID: nextWorkoutID,
+      nextWorkoutID: nextWorkoutID+1
+    })
+  }
+
+  deleteCurrWorkout = () => {
+    let newWorkouts = new Map(this.state.workouts);
+    newWorkouts.delete(this.state.currWorkoutID);
+    let nextWorkoutID = this.state.currWorkoutID;
+    if (newWorkouts.size === 0) {
+      newWorkouts.set(this.state.currWorkoutID, this.generateWorkout());
+    } 
+    else {
+      nextWorkoutID = newWorkouts.keys().next().value;
+    }
+    this.setState({
+      workouts: newWorkouts,
+      currWorkoutID: nextWorkoutID
+    })
   }
 
   isWorkoutInvalid = (workout) => {
@@ -173,6 +197,15 @@ Please fix and try again. Thanks!`);
         window.scrollTo(0, 0);
       });
     }
+  }
+
+  updateWorkoutName = (event) => {
+    const workout = this.getDeepWorkoutClone(this.state.currWorkoutID);
+    if (!workout) return;
+    workout.name = event.target.value;
+    this.setState({
+      workouts: this.updatedWorkouts(this.state.currWorkoutID, workout)
+    });
   }
 
   updateExercise = (event) => {
@@ -214,7 +247,7 @@ Please fix and try again. Thanks!`);
   discardAllSets = () => {
     const oldWorkout = this.state.workouts.get(this.state.currWorkoutID);
     if (!oldWorkout) return;
-    const workout = App.generateWorkout(oldWorkout.name); //keep workout name
+    const workout = this.generateWorkout(oldWorkout.name, undefined, undefined, oldWorkout.nextSetId+1, this.generateEmptySets(oldWorkout.nextSetId)); //keep workout name
     this.setState({
       workouts: this.updatedWorkouts(this.state.currWorkoutID, workout),
       exercise: null,
@@ -222,10 +255,33 @@ Please fix and try again. Thanks!`);
     });
   }
 
+  generateEmptySets = (id) => {
+    return [new Set(id, '')];
+  }
+
+  generateWorkout = (name=(new Date()).toString(), exercise=null, breakTime=new Time(null, null), nextSetId=1, sets=this.generateEmptySets(0)) => {
+    return {
+      name: name,
+      exercise: exercise,
+      breakTime: breakTime,
+      nextSetId: nextSetId,
+      sets: sets
+    };
+  }
+
+  switchWorkouts = (event) => {
+    const key = Number(event.target.value);
+    if (!this.state.workouts.has(key)) return;
+    this.setState({
+      currWorkoutID: key
+    })
+  }
+
   render() {
     const { workouts, currWorkoutID, isRunning } = this.state;
     const currWorkout = workouts.get(currWorkoutID);
-    const currSets = currWorkout? currWorkout.sets : App.generateWorkout().sets;
+    const currSets = currWorkout? currWorkout.sets : this.generateWorkout().sets;
+    const name = currWorkout? currWorkout.name : '';
     const exercise = currWorkout? currWorkout.exercise : '';
     const breakTime = currWorkout? currWorkout.breakTime : '';
     return (
@@ -233,21 +289,32 @@ Please fix and try again. Thanks!`);
         <h2> 
           {isRunning? 'Currently running workout...' : 'Edit your workout!' }
         </h2>
+        <select id='workoutSelector' onChange={this.switchWorkouts} value={currWorkoutID}>
+          {Array.from(workouts.entries()).map((pair) => {
+            const key = pair[0], workout = pair[1];
+            return <option key={key} value={key}>{workout.name}</option>
+          })}
+        </select>
         {isRunning? <RunManager workoutSets={currSets} 
                                 exercise={exercise} 
                                 breakTime={this.parseTime(breakTime)} 
                                 toggleRun={this.toggleRun} 
                                 addNotification={this._addNotification} /> :
-                    <Editor workoutSets={currSets}
-                            breakTime={breakTime}
+                    <Editor key={currWorkoutID}
+                            workoutSets={currSets}
+                            workoutName={name}
                             exercise={exercise}
+                            breakTime={breakTime}
+                            updateWorkoutName={this.updateWorkoutName}
                             updateExercise={this.updateExercise}
                             updateBreakMin={this.updateBreakTime_wrapper(App.ID_MIN)}
                             updateBreakSec={this.updateBreakTime_wrapper(App.ID_SEC)}
                             updateSet={this.updateSet} 
                             addEmptySetToBase={this.addEmptySet} 
                             deleteSet={this.deleteSet} 
-                            discardAllSets={this.discardAllSets} /> }
+                            discardAllSets={this.discardAllSets}
+                            addNewWorkout={this.addEmptyWorkout}
+                            deleteCurrWorkout={this.deleteCurrWorkout} /> }
         <RunButton isRunning={isRunning}
                    toggleRun={this.toggleRun} />
         <NotificationSystem ref={this._notificationSystem} style={this.notifStyles} />
@@ -259,5 +326,7 @@ Please fix and try again. Thanks!`);
 App.ID_MIN = 'id min';
 App.ID_SEC = 'id sec';
 App.STORAGE_KEY_WORKOUTS = 'workouts';
+App.STORAGE_KEY_CURR_WORKOUT_ID = 'current workout id';
+App.STORAGE_KEY_NEXT_WORKOUT_ID = 'next workout id';
 
 export default App;

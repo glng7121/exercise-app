@@ -7,7 +7,7 @@ class Editor extends Component {
       super(props);
 
       this.setupRefs = []; //stores constant refs for workout setup: exercise, min/sec of breaktime
-      for (let i = 0; i < 3; i++) {
+      for (let i = 0; i < 4; i++) {
         this.setupRefs.push(React.createRef());
       }
 
@@ -15,7 +15,7 @@ class Editor extends Component {
       for (let i = 1; i < this.props.workoutSets.length; i++) {
         initialSetRefs.push(React.createRef());
       }
-      this.state = { 
+      this.state = {
         setRefs: initialSetRefs
       };
     }
@@ -93,11 +93,6 @@ class Editor extends Component {
 
     discardAllSets = () => {
       this.props.discardAllSets();
-      //manually change setup fields because they won't respond to app's state changing.
-      //could fix by propagating app's state to editor, todo later maybe?
-      this.setupRefs[Editor.EXER_IND].current.value = '';
-      this.setupRefs[Editor.BREAK_MIN_IND].current.value = '';
-      this.setupRefs[Editor.BREAK_SEC_IND].current.value = '';
       this.setState({
         setRefs: [React.createRef()]
       });
@@ -110,8 +105,9 @@ class Editor extends Component {
               <tbody>
                 <tr>
                   <td className='button-menu'>
-                    <button onClick={this.discardAllSets}> Discard Workout </button>
-                    
+                    <button onClick={this.discardAllSets}> Discard Sets </button>
+                    <button onClick={this.props.addNewWorkout}> New </button>
+                    <button onClick={this.props.deleteCurrWorkout}> Delete </button>
                   </td>
                 </tr>
                 <tr>
@@ -123,9 +119,21 @@ class Editor extends Component {
                           <table className='setup-fields'>
                             <tbody>
                               <tr>
+                                <td> Name: </td>
+                                <td>
+                                  <input id='nameField' type='text' placeholder='Workout name' value={this.props.workoutName || ''} ref={this.setupRefs[Editor.NAME_IND]}
+                                        onChange={this.props.updateWorkoutName}
+                                        onKeyPress={this.handleNextField_wrapper(Editor.NAME_IND, Editor.FIELD_ID_SETUP)} />
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                          <table className='setup-fields'>
+                            <tbody>
+                              <tr>
                                 <td> Exercise: </td>
                                 <td> 
-                                    <input id='exerciseField' type='text' placeholder='e.g. pushups' defaultValue={this.props.exercise} ref={this.setupRefs[Editor.EXER_IND]} 
+                                    <input id='exerciseField' type='text' placeholder='e.g. pushups' value={this.props.exercise || ''} ref={this.setupRefs[Editor.EXER_IND]} 
                                           onChange={this.props.updateExercise} 
                                           onKeyPress={this.handleNextField_wrapper(Editor.EXER_IND, Editor.FIELD_ID_SETUP)} />
                                 </td>
@@ -133,10 +141,10 @@ class Editor extends Component {
                               <tr>
                                 <td> Break time: </td>
                                 <td> 
-                                  <input className='number-field' type='number' placeholder='min' defaultValue={this.props.breakTime.min} ref={this.setupRefs[Editor.BREAK_MIN_IND]} 
+                                  <input className='number-field' type='number' placeholder='min' value={this.props.breakTime.min || ''} ref={this.setupRefs[Editor.BREAK_MIN_IND]} 
                                         onChange={this.props.updateBreakMin} 
                                         onKeyPress={this.handleNextField_wrapper(Editor.BREAK_MIN_IND, Editor.FIELD_ID_SETUP)} />:
-                                  <input className='number-field' type='number' placeholder='sec' defaultValue={this.props.breakTime.sec} ref={this.setupRefs[Editor.BREAK_SEC_IND]} 
+                                  <input className='number-field' type='number' placeholder='sec' value={this.props.breakTime.sec || ''} ref={this.setupRefs[Editor.BREAK_SEC_IND]} 
                                         onChange={this.props.updateBreakSec} 
                                         onKeyPress={this.handleNextField_wrapper(Editor.BREAK_SEC_IND, Editor.FIELD_ID_SETUP)} />
                                 </td>
@@ -159,7 +167,7 @@ class Editor extends Component {
                                   <tr key={set.key}>
                                     <td> {`${i+1})`} </td>
                                     <td>
-                                        <input className='number-field' type='number' placeholder='#' defaultValue={set.reps.toString()}
+                                        <input className='number-field' type='number' placeholder='#' value={set.reps.toString()}
                                             ref={this.state.setRefs[i]}
                                             onChange={this.updateSet_wrapper(i)} 
                                             onKeyPress={this.handleNextField_wrapper(i, Editor.FIELD_ID_SET)} />
@@ -194,8 +202,9 @@ class Editor extends Component {
 
 Editor.FIELD_ID_SETUP = 'field id setup';
 Editor.FIELD_ID_SET = 'field id set';
-Editor.EXER_IND = 0;
-Editor.BREAK_MIN_IND = 1;
-Editor.BREAK_SEC_IND = 2;
+Editor.NAME_IND = 0;
+Editor.EXER_IND = 1;
+Editor.BREAK_MIN_IND = 2;
+Editor.BREAK_SEC_IND = 3;
 
 export default Editor;
