@@ -91,25 +91,11 @@ class Editor extends Component {
       };
     }
 
-    discardAllSets = () => {
-      this.props.discardAllSets();
-      this.setState({
-        setRefs: [React.createRef()]
-      });
-    }
-
     render () {
       return (
         <div id='editorComponent'>
           <table id='editorInterface'>
               <tbody>
-                <tr>
-                  <td className='button-menu'>
-                    <button onClick={this.discardAllSets}> Discard Sets </button>
-                    <button onClick={this.props.addNewWorkout}> New </button>
-                    <button onClick={this.props.deleteCurrWorkout}> Delete </button>
-                  </td>
-                </tr>
                 <tr>
                   <td>
                   <table className='workout-fields'>

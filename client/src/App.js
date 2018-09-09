@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import Editor from './Editor.js';
 import RunManager from './RunManager.js';
+import WorkoutsManager from './WorkoutsManager.js';
 import { Time, storageAvailable } from './helpers.js';
 import './App.css';
 
@@ -9,6 +10,23 @@ const NotificationSystem = require('react-notification-system');
 function Set(id, reps) {
   this.key = id;
   this.reps = reps;
+}
+
+let tonOfSets = [];
+for (let i = 0; i < 1000; i++) {
+  tonOfSets.push(new Set(i, String(i)));
+}
+
+let tonOfWorkouts = new Map();
+for (let i = 0; i < 1000; i++) {
+  const workout = {
+    name: `${i}th workout`,
+    exercise: `${i}th exercise`,
+    breakTime: new Time(0, 3),
+    nextSetId: 1000,
+    sets: tonOfSets.map(s => Object.assign({}, s))
+  };
+  tonOfWorkouts.set(i, workout);
 }
 
 let workout_test = [new Set(0, '25'), 
@@ -26,12 +44,22 @@ function RunButton(props) {
 class App extends Component {
   constructor(props) {
     super(props);
+    /*
+    this.state = {
+      currWorkoutId: 0,
+      nextWorkoutID: 1, 
+      workouts: new Map([[0, this.generateWorkout()]]),
+      isRunning: false,
+      showWorkoutsManager: false
+    }
+    */
     this.state = {
       //currentBaseWorkout: workout_test, //App.generateInitWorkout(), //workout_test,
-      currWorkoutID: this.tryCurrWorkoutIdFromStorage(),
+      currWorkoutId: this.tryCurrWorkoutIdFromStorage(),
       nextWorkoutID: this.tryNextWorkoutIdFromStorage(),
-      workouts: this.tryWorkoutsFromStorage(),
-      isRunning: false
+      workouts: this.tryWorkoutsFromStorage(), //new Map([[0, this.generateWorkout()]]), //tonOfWorkouts,
+      isRunning: false,
+      showWorkoutsManager: false
     }
     this._notificationSystem = React.createRef();
     this.notifStyles = {
@@ -53,9 +81,9 @@ class App extends Component {
   }
 
   tryCurrWorkoutIdFromStorage() {
-    let currWorkoutID;
-    if (storageAvailable('localStorage') && (currWorkoutID = localStorage.getItem(App.STORAGE_KEY_CURR_WORKOUT_ID))) {
-      return JSON.parse(currWorkoutID);
+    let currWorkoutId;
+    if (storageAvailable('localStorage') && (currWorkoutId = localStorage.getItem(App.STORAGE_KEY_CURR_WORKOUT_ID))) {
+      return JSON.parse(currWorkoutId);
     } else {
       return 0;
     }
@@ -82,7 +110,7 @@ class App extends Component {
   populateWorkoutsStorage = () => {
     if (storageAvailable('localStorage')) {
       localStorage.setItem(App.STORAGE_KEY_WORKOUTS, JSON.stringify(Array.from(this.state.workouts.entries())));
-      localStorage.setItem(App.STORAGE_KEY_CURR_WORKOUT_ID, JSON.stringify(this.state.currWorkoutID));
+      localStorage.setItem(App.STORAGE_KEY_CURR_WORKOUT_ID, JSON.stringify(this.state.currWorkoutId));
       localStorage.setItem(App.STORAGE_KEY_NEXT_WORKOUT_ID, JSON.stringify(this.state.nextWorkoutID));
     }
   }
@@ -97,7 +125,7 @@ class App extends Component {
 
   // returns a deep clone of the requested workout
   getDeepWorkoutClone = (key) => {
-    const workout = this.state.workouts.get(this.state.currWorkoutID);
+    const workout = this.state.workouts.get(this.state.currWorkoutId);
     if (!workout) return null;
     return this.generateWorkout(workout.name, 
       workout.exercise, 
@@ -115,25 +143,25 @@ class App extends Component {
   }
 
   updateSet = (event, index) => {
-    const workout = this.getDeepWorkoutClone(this.state.currWorkoutID);
+    const workout = this.getDeepWorkoutClone(this.state.currWorkoutId);
     if (!workout) return;
     workout.sets[index].reps = event.target.value;
-    this.setState({ workouts: this.updatedWorkouts(this.state.currWorkoutID, workout) });
+    this.setState({ workouts: this.updatedWorkouts(this.state.currWorkoutId, workout) });
   }
 
   addEmptySet = (index) => {
-    const workout = this.getDeepWorkoutClone(this.state.currWorkoutID);
+    const workout = this.getDeepWorkoutClone(this.state.currWorkoutId);
     if (!workout) return;
     workout.sets.splice(index, 0, new Set(workout.nextSetId, ''));
     workout.nextSetId++;
-    this.setState({ workouts: this.updatedWorkouts(this.state.currWorkoutID, workout) });
+    this.setState({ workouts: this.updatedWorkouts(this.state.currWorkoutId, workout) });
   }
 
   deleteSet = (index) => {
-    const workout = this.getDeepWorkoutClone(this.state.currWorkoutID);
+    const workout = this.getDeepWorkoutClone(this.state.currWorkoutId);
     if (!workout) return;
     workout.sets.splice(index, 1);
-    this.setState({ workouts: this.updatedWorkouts(this.state.currWorkoutID, workout) });
+    this.setState({ workouts: this.updatedWorkouts(this.state.currWorkoutId, workout) });
   }
 
   addEmptyWorkout = () => {
@@ -141,24 +169,24 @@ class App extends Component {
     const nextWorkoutID = this.state.nextWorkoutID;
     this.setState({ 
       workouts: this.updatedWorkouts(nextWorkoutID, emptyWorkout),
-      currWorkoutID: nextWorkoutID,
+      currWorkoutId: nextWorkoutID,
       nextWorkoutID: nextWorkoutID+1
     })
   }
 
   deleteCurrWorkout = () => {
     let newWorkouts = new Map(this.state.workouts);
-    newWorkouts.delete(this.state.currWorkoutID);
-    let nextWorkoutID = this.state.currWorkoutID;
+    newWorkouts.delete(this.state.currWorkoutId);
+    let nextWorkoutID = this.state.currWorkoutId;
     if (newWorkouts.size === 0) {
-      newWorkouts.set(this.state.currWorkoutID, this.generateWorkout());
+      newWorkouts.set(this.state.currWorkoutId, this.generateWorkout());
     } 
     else {
       nextWorkoutID = newWorkouts.keys().next().value;
     }
     this.setState({
       workouts: newWorkouts,
-      currWorkoutID: nextWorkoutID
+      currWorkoutId: nextWorkoutID
     })
   }
 
@@ -179,7 +207,7 @@ class App extends Component {
   }
 
   toggleRun = () => {
-    const workout = this.state.workouts.get(this.state.currWorkoutID);
+    const workout = this.state.workouts.get(this.state.currWorkoutId);
     if (!this.state.isRunning && (this.isWorkoutInvalid(workout)
                                   || !workout.exercise
                                   || !this.isBreakTimeValid(workout.breakTime))) {
@@ -200,26 +228,26 @@ Please fix and try again. Thanks!`);
   }
 
   updateWorkoutName = (event) => {
-    const workout = this.getDeepWorkoutClone(this.state.currWorkoutID);
+    const workout = this.getDeepWorkoutClone(this.state.currWorkoutId);
     if (!workout) return;
     workout.name = event.target.value;
     this.setState({
-      workouts: this.updatedWorkouts(this.state.currWorkoutID, workout)
+      workouts: this.updatedWorkouts(this.state.currWorkoutId, workout)
     });
   }
 
   updateExercise = (event) => {
-    const workout = this.getDeepWorkoutClone(this.state.currWorkoutID);
+    const workout = this.getDeepWorkoutClone(this.state.currWorkoutId);
     if (!workout) return;
     workout.exercise = event.target.value;
     this.setState({
-      workouts: this.updatedWorkouts(this.state.currWorkoutID, workout)
+      workouts: this.updatedWorkouts(this.state.currWorkoutId, workout)
     });
   }
 
   updateBreakTime_wrapper = (unit) => {
     return (event) => {
-      const workout = this.getDeepWorkoutClone(this.state.currWorkoutID);
+      const workout = this.getDeepWorkoutClone(this.state.currWorkoutId);
       if (!workout) return;
       const newBreakTime = workout.breakTime;
       const newUnitStr = event.target.value;
@@ -239,17 +267,17 @@ Please fix and try again. Thanks!`);
       }
 
       this.setState({
-        workouts: this.updatedWorkouts(this.state.currWorkoutID, workout)
+        workouts: this.updatedWorkouts(this.state.currWorkoutId, workout)
       });
     };
   }
 
   discardAllSets = () => {
-    const oldWorkout = this.state.workouts.get(this.state.currWorkoutID);
+    const oldWorkout = this.state.workouts.get(this.state.currWorkoutId);
     if (!oldWorkout) return;
     const workout = this.generateWorkout(oldWorkout.name, undefined, undefined, oldWorkout.nextSetId+1, this.generateEmptySets(oldWorkout.nextSetId)); //keep workout name
     this.setState({
-      workouts: this.updatedWorkouts(this.state.currWorkoutID, workout),
+      workouts: this.updatedWorkouts(this.state.currWorkoutId, workout),
       exercise: null,
       breakTime: new Time(null, null)
     });
@@ -273,13 +301,13 @@ Please fix and try again. Thanks!`);
     const key = Number(event.target.value);
     if (!this.state.workouts.has(key)) return;
     this.setState({
-      currWorkoutID: key
+      currWorkoutId: key
     })
   }
 
   render() {
-    const { workouts, currWorkoutID, isRunning } = this.state;
-    const currWorkout = workouts.get(currWorkoutID);
+    const { workouts, currWorkoutId, isRunning, showWorkoutsManager } = this.state;
+    const currWorkout = workouts.get(currWorkoutId);
     const currSets = currWorkout? currWorkout.sets : this.generateWorkout().sets;
     const name = currWorkout? currWorkout.name : '';
     const exercise = currWorkout? currWorkout.exercise : '';
@@ -289,18 +317,24 @@ Please fix and try again. Thanks!`);
         <h2> 
           {isRunning? 'Currently running workout...' : 'Edit your workout!' }
         </h2>
-        <select id='workoutSelector' onChange={this.switchWorkouts} value={currWorkoutID}>
-          {Array.from(workouts.entries()).map((pair) => {
-            const key = pair[0], workout = pair[1];
-            return <option key={key} value={key}>{workout.name}</option>
-          })}
-        </select>
         {isRunning? <RunManager workoutSets={currSets} 
                                 exercise={exercise} 
                                 breakTime={this.parseTime(breakTime)} 
                                 toggleRun={this.toggleRun} 
                                 addNotification={this._addNotification} /> :
-                    <Editor key={currWorkoutID}
+                    <div>
+                      <button onClick={() => this.setState((prevState) => ({showWorkoutsManager: !prevState.showWorkoutsManager}))}>
+                        {showWorkoutsManager? 'Collapse...' : 'Manage workouts...'}
+                      </button>
+                      {showWorkoutsManager? 
+                        <WorkoutsManager 
+                          currWorkoutId={currWorkoutId}
+                          workouts={workouts}
+                          addEmptyWorkout={this.addEmptyWorkout} 
+                          deleteCurrWorkout={this.deleteCurrWorkout}
+                          switchWorkouts={this.switchWorkouts} /> 
+                        : null}
+                      <Editor key={currWorkoutId}
                             workoutSets={currSets}
                             workoutName={name}
                             exercise={exercise}
@@ -311,10 +345,8 @@ Please fix and try again. Thanks!`);
                             updateBreakSec={this.updateBreakTime_wrapper(App.ID_SEC)}
                             updateSet={this.updateSet} 
                             addEmptySetToBase={this.addEmptySet} 
-                            deleteSet={this.deleteSet} 
-                            discardAllSets={this.discardAllSets}
-                            addNewWorkout={this.addEmptyWorkout}
-                            deleteCurrWorkout={this.deleteCurrWorkout} /> }
+                            deleteSet={this.deleteSet} />
+                    </div> }
         <RunButton isRunning={isRunning}
                    toggleRun={this.toggleRun} />
         <NotificationSystem ref={this._notificationSystem} style={this.notifStyles} />

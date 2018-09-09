@@ -47,10 +47,6 @@ input, select, textarea, button {
   margin: 0 auto;
 }
 
-#workoutSelector {
-  width: 100%;
-}
-
 .NotificationSystem {
   font-size: 3px;
 }
