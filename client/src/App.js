@@ -177,17 +177,15 @@ class App extends Component {
   deleteCurrWorkout = () => {
     let newWorkouts = new Map(this.state.workouts);
     newWorkouts.delete(this.state.currWorkoutId);
-    let nextWorkoutID = this.state.currWorkoutId;
     if (newWorkouts.size === 0) {
-      newWorkouts.set(this.state.currWorkoutId, this.generateWorkout());
+      this.setState({ workouts: newWorkouts }, this.addEmptyWorkout);
     } 
     else {
-      nextWorkoutID = newWorkouts.keys().next().value;
+      this.setState({
+        workouts: newWorkouts,
+        currWorkoutId: newWorkouts.keys().next().value
+      })
     }
-    this.setState({
-      workouts: newWorkouts,
-      currWorkoutId: nextWorkoutID
-    })
   }
 
   isWorkoutInvalid = (workout) => {
@@ -317,7 +315,8 @@ Please fix and try again. Thanks!`);
         <h2> 
           {isRunning? 'Currently running workout...' : 'Edit your workout!' }
         </h2>
-        {isRunning? <RunManager workoutSets={currSets} 
+        {isRunning? <RunManager name={name}
+                                workoutSets={currSets} 
                                 exercise={exercise} 
                                 breakTime={this.parseTime(breakTime)} 
                                 toggleRun={this.toggleRun} 

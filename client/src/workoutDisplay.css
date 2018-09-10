@@ -1,17 +1,17 @@
 .workout-fields {
-    border: 1px solid black;
-    border-radius: 5px;
-    box-shadow: 1px 1px;
-    margin: 0 auto;
+  border: 1px solid black;
+  border-radius: 5px;
+  box-shadow: 1px 1px;
+  margin: 0 auto;
 }
 
 .setup-fields {
-    width: 100%;
-    border-bottom: 1px solid black;
+  width: 100%;
+  border-bottom: 1px solid black;
 }
 
 .set-fields {
-    margin: 0 auto;
+  margin: 0 auto;
 }
 
 .workout-fields td {

@@ -264,6 +264,18 @@ class RunManager extends Component {
         <table className='workout-fields'>
           <tbody>
             <tr>
+                <td>
+                  <table className='setup-fields'>
+                    <tbody>
+                      <tr>
+                        <td> Name: </td>
+                        <td> {this.props.name} </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </td>
+              </tr>
+            <tr>
               <td>
                 <table className='setup-fields'>
                   <tbody>
