@@ -1,0 +1,16 @@
+#workoutsManagerComponent {
+  display: flex;
+  border: 1px dashed black;
+  padding: 3vw;
+  margin: 5vw;
+}
+
+#workoutsManagerComponent .button-menu {
+  margin: 0;
+  white-space: nowrap;
+}
+
+#workoutsManagerComponent #workoutSelector {
+  margin-left: 1vw;
+  width: 100%;
+}
