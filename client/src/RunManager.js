@@ -333,7 +333,7 @@ class RunManager extends Component {
   }  
 }
 
-RunManager.API_KEY = '10c95f8e063d489fbb2bb70346bf07af';
+RunManager.API_KEY = '3b7d29d214d445308dcae07925a88b63';
 RunManager.SRC_TTS = 'text to speech api source';
 RunManager.SRC_LOCAL = 'local server source';
 
