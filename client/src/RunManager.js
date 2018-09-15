@@ -228,7 +228,7 @@ class RunManager extends Component {
         //only include break start buzzer if it won't collide with the break end buzzer after a 0 break
         breakStartAudioBufs.push(this.audioBufs.localSrc.breakSound);
       }
-      if (this.props.breakTime.min === 0 && this.props.breakTime.sec > 6 && this.props.breakTime.sec !== 11) {
+      if (this.props.breakTime.min > 0 || (this.props.breakTime.sec > 6 && this.props.breakTime.sec !== 11)) {
         //only include break start voiceover if it won't collide with the 5-sec break time countdown or the 'Get ready' at the 10 sec mark
         breakStartAudioBufs.push(this.audioBufs.localSrc.breakStart);
       }
