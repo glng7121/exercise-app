@@ -13,7 +13,7 @@ class WorkoutsManager extends Component {
           {Array.from(this.props.workouts.entries()).map((pair) => {
             const key = pair[0];
             const workout = (key === this.props.currWorkoutId? this.props.currWorkout : pair[1]);
-            return <option key={key} value={key}>{workout.name? workout.name : '(invalid name)'}</option>
+            return <option key={key} value={key}>{workout.name? workout.name : '(empty name)'}</option>
           })}
         </select>
         </div>

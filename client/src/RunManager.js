@@ -269,7 +269,7 @@ class RunManager extends Component {
                     <tbody>
                       <tr>
                         <td> Name: </td>
-                        <td> {this.props.name} </td>
+                        <td> {this.props.name? this.props.name : '(empty name)'} </td>
                       </tr>
                     </tbody>
                   </table>

@@ -236,7 +236,7 @@ class App extends Component {
   }
 
   isWorkoutInvalid = (workout) => {
-    return !workout || !workout.name || workout.sets.find((set) => !set.reps || isNaN(Number(set.reps)) || Number(set.reps) < 0);
+    return !workout || workout.sets.find((set) => !set.reps || isNaN(Number(set.reps)) || Number(set.reps) < 0);
   }
 
   isBreakTimeValid = (breakTime) => {
