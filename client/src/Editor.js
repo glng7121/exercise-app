@@ -80,14 +80,14 @@ class Editor extends Component {
         const refs = this.state.setRefs;
         refs.splice(index, 1);
         this.setState({ setRefs: refs }, () => {
-          this.props.deleteSet(index);
+          this.props.deleteSetFromBase(index);
         });
       }
     }
 
     updateSet_wrapper = (index) => {
       return (event) => {
-        this.props.updateSet(event, index);
+        this.props.updateSetInBase(event, index);
       };
     }
 
@@ -108,7 +108,7 @@ class Editor extends Component {
                                 <td> Name: </td>
                                 <td>
                                   <input id='nameField' type='text' placeholder='Workout name' value={this.props.workoutName || ''} ref={this.setupRefs[Editor.NAME_IND]}
-                                        onChange={this.props.updateWorkoutName}
+                                        onChange={this.props.updateName}
                                         onKeyPress={this.handleNextField_wrapper(Editor.NAME_IND, Editor.FIELD_ID_SETUP)} />
                                 </td>
                               </tr>

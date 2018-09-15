@@ -87,15 +87,6 @@ class App extends Component {
     }
   }
 
-  componentDidMount = () => {
-    window.addEventListener('beforeunload', this.populateWorkoutsStorage);
-  }
-
-  componentWillUnmount = () => {
-    //store workouts into local storage
-    window.removeEventListener('beforeunload', this.populateWorkoutsStorage);
-  }
-
   tryEditableWorkoutFromStorage = (workouts, key) => {
     let editableWorkout;
     if (storageAvailable('localStorage') && (editableWorkout = localStorage.getItem(App.STORAGE_KEY_EDITABLE_WORKOUT))) {
@@ -141,6 +132,12 @@ class App extends Component {
     }
   }
 
+  saveInStorage = (key, item) => {
+    if (storageAvailable('localStorage')) {
+      localStorage.setItem(key, JSON.stringify(item));
+    }
+  }
+
   _addNotification = (message, level='success', autoDismissSec=8) => {
     this._notificationSystem.current.addNotification({
       message: message,
@@ -171,7 +168,9 @@ class App extends Component {
     const workout = this.getDeepWorkoutClone(this.state.editableWorkout);
     if (!workout) return;
     workout.sets[index].reps = event.target.value;
-    this.setState({ editableWorkout: workout });
+    this.setState({ 
+      editableWorkout: workout 
+    }, () => this.saveInStorage(App.STORAGE_KEY_EDITABLE_WORKOUT, workout));
   }
 
   addEmptySet = (index) => {
@@ -179,14 +178,18 @@ class App extends Component {
     if (!workout) return;
     workout.sets.splice(index, 0, new Set(workout.nextSetId, ''));
     workout.nextSetId++;
-    this.setState({ editableWorkout: workout });
+    this.setState({ 
+      editableWorkout: workout 
+    }, () => this.saveInStorage(App.STORAGE_KEY_EDITABLE_WORKOUT, workout));
   }
 
   deleteSet = (index) => {
     const workout = this.getDeepWorkoutClone(this.state.editableWorkout);
     if (!workout) return;
     workout.sets.splice(index, 1);
-    this.setState({ editableWorkout: workout });
+    this.setState({ 
+      editableWorkout: workout 
+    }, () => this.saveInStorage(App.STORAGE_KEY_EDITABLE_WORKOUT, workout));
   }
 
   addEmptyWorkout = (saveCurrWorkout=true) => {
@@ -201,7 +204,7 @@ class App extends Component {
       currWorkoutId: nextWorkoutID,
       editableWorkout: workouts.get(nextWorkoutID),
       nextWorkoutID: nextWorkoutID+1
-    });
+    }, () => this.populateWorkoutsStorage());
   }
 
   deleteCurrWorkout = () => {
@@ -210,9 +213,7 @@ class App extends Component {
     if (newWorkouts.size === 0) {
       this.setState({ 
         workouts: newWorkouts,
-      }, () => {
-        this.addEmptyWorkout(false);
-      });
+      }, () => this.addEmptyWorkout(false));
     } 
     else {
       const currWorkoutId = newWorkouts.keys().next().value;
@@ -220,19 +221,19 @@ class App extends Component {
         workouts: newWorkouts,
         currWorkoutId: currWorkoutId,
         editableWorkout: newWorkouts.get(currWorkoutId)
-      })
+      }, () => this.populateWorkoutsStorage());
     }
   }
 
   selectWorkout = (event) => {
     const key = Number(event.target.value);
     if (!this.state.workouts.has(key)) return;
-    const updatedWorkouts = this.updatedWorkouts(this.state.currWorkoutId, this.getDeepWorkoutClone(this.state.editableWorkout)); //todo: try removing deep workout clone part?
+    const updatedWorkouts = this.updatedWorkouts(this.state.currWorkoutId, this.getDeepWorkoutClone(this.state.editableWorkout));
     this.setState({
       editableWorkout: updatedWorkouts.get(key),
       workouts: updatedWorkouts,
       currWorkoutId: key
-    });
+    }, () => this.populateWorkoutsStorage());
   }
 
   isWorkoutInvalid = (workout) => {
@@ -277,19 +278,19 @@ Please fix and try again. Thanks!`);
     workout.name = event.target.value;
     this.setState({
       editableWorkout: workout
-    });
+    }, () => this.saveInStorage(App.STORAGE_KEY_EDITABLE_WORKOUT, workout));
   }
 
-  updateExercise = (event) => {
+  updateWorkoutExercise = (event) => {
     const workout = this.getDeepWorkoutClone(this.state.editableWorkout);
     if (!workout) return;
     workout.exercise = event.target.value;
     this.setState({
       editableWorkout: workout
-    });
+    }, () => this.saveInStorage(App.STORAGE_KEY_EDITABLE_WORKOUT, workout));
   }
 
-  updateBreakTime_wrapper = (unit) => {
+  updateWorkoutBreakTime_wrapper = (unit) => {
     return (event) => {
       const workout = this.getDeepWorkoutClone(this.state.editableWorkout);
       if (!workout) return;
@@ -312,22 +313,9 @@ Please fix and try again. Thanks!`);
 
       this.setState({
         editableWorkout: workout
-      });
+      }, () => this.saveInStorage(App.STORAGE_KEY_EDITABLE_WORKOUT, workout));
     };
   }
-
-  /*
-  discardAllSets = () => {
-    const oldWorkout = this.state.workouts.get(this.state.currWorkoutId);
-    if (!oldWorkout) return;
-    const workout = this.generateWorkout(oldWorkout.name, undefined, undefined, oldWorkout.nextSetId+1, this.generateEmptySets(oldWorkout.nextSetId)); //keep workout name
-    this.setState({
-      workouts: this.updatedWorkouts(this.state.currWorkoutId, workout),
-      exercise: null,
-      breakTime: new Time(null, null)
-    });
-  }
-  */
 
   generateEmptySets = (id) => {
     return [new Set(id, '')];
@@ -378,13 +366,13 @@ Please fix and try again. Thanks!`);
                             workoutName={name}
                             exercise={exercise}
                             breakTime={breakTime}
-                            updateWorkoutName={this.updateWorkoutName}
-                            updateExercise={this.updateExercise}
-                            updateBreakMin={this.updateBreakTime_wrapper(App.ID_MIN)}
-                            updateBreakSec={this.updateBreakTime_wrapper(App.ID_SEC)}
-                            updateSet={this.updateSet} 
+                            updateName={this.updateWorkoutName}
+                            updateExercise={this.updateWorkoutExercise}
+                            updateBreakMin={this.updateWorkoutBreakTime_wrapper(App.ID_MIN)}
+                            updateBreakSec={this.updateWorkoutBreakTime_wrapper(App.ID_SEC)}
+                            updateSetInBase={this.updateSet} 
                             addEmptySetToBase={this.addEmptySet} 
-                            deleteSet={this.deleteSet} />
+                            deleteSetFromBase={this.deleteSet} />
                     </div> }
         <RunButton isRunning={isRunning}
                    toggleRun={this.toggleRun} />
