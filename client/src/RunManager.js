@@ -36,8 +36,7 @@ class RunManager extends Component {
           breakStart: audioBufObj(null, 'break start announcement'),
           breakEndWarning: audioBufObj(null, 'break end warning'),
           countdown: [ audioBufObj(null) ]
-        },
-        remoteSrc: {
+        }, remoteSrc: {
           sets: []
         }
       };
@@ -50,20 +49,37 @@ class RunManager extends Component {
             this.audioBufs.localSrc.countdown.push(new audioBufObj(null, `${addSuffixToNum(i)} second of the break countdown`));
             this.getAudioBuf(this.audioBufs.localSrc['countdown'][i], RunManager.SRC_LOCAL, `countdown-${i}.wav`);
           }
-        }
-        else {
+        } else {
           const fileName = `${soundType.replace(/([A-Z])/g, ($1) => `-${$1.toLowerCase()}`)}.wav`;
           this.getAudioBuf(this.audioBufs.localSrc[soundType], RunManager.SRC_LOCAL, fileName);
         }
       }
       for (let i = 0; i < this.props.workoutSets.length; i++) {
-        const message = i === 0? `Running workout for ${this.props.exercise} with ${parsedBreakTimeStr(this.props.breakTime)} break time.` 
-          : '';
-        const setType = i === this.props.workoutSets.length - 1? 'last' 
-          : addSuffixToNum(i+1);
+        this.audioBufs.remoteSrc.sets[i] = {
+          warning: i === 0? null : new audioBufObj(null, `${addSuffixToNum(i+1)} set heads up`),
+          reps: new audioBufObj(null, `${addSuffixToNum(i+1)} set reps`)
+        }
+        const setType = i === this.props.workoutSets.length - 1? 'last' : addSuffixToNum(i+1);
         const numTries = i === 0? 0 : 5;
-        this.audioBufs.remoteSrc.sets[i] = audioBufObj(null, `${setType} set`);
-        this.getAudioBuf(this.audioBufs.remoteSrc.sets[i], RunManager.SRC_TTS, `${message} ${setType} set: ${this.props.workoutSets[i].reps} ${this.props.exercise}`, i === 0, numTries);
+        for (let audio in this.audioBufs.remoteSrc.sets[i]) {
+          if (this.audioBufs.remoteSrc.sets[i][audio]) {
+            let message;
+            switch (audio) {
+              case 'warning':
+                message = `Get ready for the ${setType} set.`;
+                break;
+              case 'reps':
+                message = i === 0? 
+                  `Running workout for ${this.props.exercise} with ${parsedBreakTimeStr(this.props.breakTime)} break time. ${setType} set: `
+                  : '';
+                message += `${this.props.workoutSets[i].reps} ${this.props.exercise}.`;
+                break;
+              default:
+                continue;
+            }
+            this.getAudioBuf(this.audioBufs.remoteSrc.sets[i][audio], RunManager.SRC_TTS, message, i === 0, numTries);
+          }
+        }
       }
     }
   }
@@ -241,7 +257,7 @@ class RunManager extends Component {
   }
 
   announceWarning = () => {
-    this.playAudioBufs([this.audioBufs.localSrc.breakEndWarning]);
+    this.playAudioBufs([this.audioBufs.remoteSrc.sets[this.state.currSetIndex].warning]);
   }
 
   announceTick = (sec) => {
@@ -250,7 +266,7 @@ class RunManager extends Component {
   }
 
   endBreak = () => {
-    this.playAudioBufs([this.audioBufs.localSrc.breakSound, this.audioBufs.remoteSrc.sets[this.state.currSetIndex]]);
+    this.playAudioBufs([this.audioBufs.localSrc.breakSound, this.audioBufs.remoteSrc.sets[this.state.currSetIndex].reps]);
     //this.apiTest(`Next set: ${this.props.workoutSets[this.state.currSetIndex].reps} ${this.props.exercise}`);
     this.setState((prevState) => ({
       isBreakTime: false
