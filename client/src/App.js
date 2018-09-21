@@ -87,9 +87,15 @@ class App extends Component {
   }
 
   tryEditableWorkoutFromStorage = (workouts, key) => {
-    let editableWorkout;
-    if (storageAvailable('localStorage') && (editableWorkout = localStorage.getItem(App.STORAGE_KEY_EDITABLE_WORKOUT))) {
-      return JSON.parse(editableWorkout);
+    let storedEditableWorkout;
+    if (storageAvailable('localStorage') && (storedEditableWorkout = localStorage.getItem(App.STORAGE_KEY_EDITABLE_WORKOUT))) {
+      const editableWorkout = JSON.parse(storedEditableWorkout);
+      if (!editableWorkout.hasOwnProperty('key')) {
+        // todo: remove when dad runs app at least once
+        editableWorkout.key = key;
+        this.saveInStorage(App.STORAGE_KEY_EDITABLE_WORKOUT, editableWorkout);
+      }
+      return editableWorkout;
     } else {
       return workouts.get(key);
     }
@@ -116,9 +122,15 @@ class App extends Component {
   tryWorkoutsFromStorage() {
     let storedWorkouts;
     if (storageAvailable('localStorage') && (storedWorkouts = localStorage.getItem(App.STORAGE_KEY_WORKOUTS))) {
-      return new Map(JSON.parse(storedWorkouts));
+      const workouts = new Map(JSON.parse(storedWorkouts));
+      if (!workouts.values().next().value.hasOwnProperty('key')) {
+        // todo: remove when dad runs app at least once
+        workouts.forEach((value, key) => { value.key = key });
+        this.saveInStorage(App.STORAGE_KEY_WORKOUTS, Array.from(workouts.entries()));
+      }
+      return workouts;
     } else {
-      return new Map([[0, this.generateWorkout(0)]]); //this.generateWorkout(undefined, 'pushups', new Time(0, 3), workout_test.length, workout_test)]]);
+      return new Map([[0, this.generateWorkout(0)]]); //this.generateWorkout(0, 'pushups', new Time(0, 3), workout_test.length, workout_test)]]);
     }
   }
 
