@@ -96,3 +96,8 @@ export function Time(min, sec) {
   this.min = min;
   this.sec = sec;
 }
+
+// from https://stackoverflow.com/a/32108184
+export function isEmptyObj(obj) {
+  return Object.keys(obj).length === 0 && obj.constructor === Object;
+}

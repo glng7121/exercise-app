@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import Editor from './Editor.js';
 import RunManager from './RunManager.js';
 import WorkoutsManager from './WorkoutsManager.js';
-import { Time, storageAvailable } from './helpers.js';
+import { Time, storageAvailable, isEmptyObj } from './helpers.js';
 import './App.css';
 
 const NotificationSystem = require('react-notification-system');
@@ -121,7 +121,9 @@ class App extends Component {
 
   tryWorkoutsFromStorage() {
     let storedWorkouts;
-    if (storageAvailable('localStorage') && (storedWorkouts = localStorage.getItem(App.STORAGE_KEY_WORKOUTS))) {
+    if (storageAvailable('localStorage') 
+        && (storedWorkouts = localStorage.getItem(App.STORAGE_KEY_WORKOUTS))
+        && !isEmptyObj(JSON.parse(storedWorkouts))) {
       const workouts = new Map(JSON.parse(storedWorkouts));
       if (!workouts.values().next().value.hasOwnProperty('key')) {
         // todo: remove when dad runs app at least once
