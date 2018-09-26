@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import ModifiedCombobox from './ModifiedCombobox.js';
 import './Editor.css';
 import './workoutDisplay.css';
 
@@ -91,13 +92,40 @@ class Editor extends Component {
       };
     }
 
+    updateName = (workout) => {
+      if (workout.key !== this.props.currWorkoutId) return;
+      const newName = workout.name;
+      this.props.updateName(newName);
+    }
+
+    selectWorkout = (workout) => {
+      this.props.selectWorkout(workout.key);
+    }
+
     render () {
+      const workouts = Array.from(this.props.workouts.entries()).map((pair) => {
+        const workout = (pair[0] === this.props.currWorkoutId? this.props.currWorkout : pair[1]);
+        return workout;
+      });
+      /*
+                                        <input id='nameField' type='text' placeholder='Workout name' value={this.props.workoutName || ''} ref={this.setupRefs[Editor.NAME_IND]}
+                                        onChange={this.updateName}
+                                        onKeyPress={this.handleNextField_wrapper(Editor.NAME_IND, Editor.FIELD_ID_SETUP)} />
+      */
       return (
         <div id='editorComponent'>
           <table id='editorInterface'>
-              <tbody>
-                <tr>
-                  <td>
+            <thead>
+              <tr className='button-menu'>
+                <th>
+                  <button onClick={this.props.addEmptyWorkout}> New </button> 
+                  <button onClick={this.props.deleteCurrWorkout}> Delete </button>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
                   <table className='workout-fields'>
                     <tbody>
                       <tr>
@@ -106,10 +134,13 @@ class Editor extends Component {
                             <tbody>
                               <tr>
                                 <td> Name: </td>
-                                <td>
-                                  <input id='nameField' type='text' placeholder='Workout name' value={this.props.workoutName || ''} ref={this.setupRefs[Editor.NAME_IND]}
-                                        onChange={this.props.updateName}
-                                        onKeyPress={this.handleNextField_wrapper(Editor.NAME_IND, Editor.FIELD_ID_SETUP)} />
+                                <td ref={this.setupRefs[Editor.NAME_IND]} onKeyPress={this.handleNextField_wrapper(Editor.NAME_IND, Editor.FIELD_ID_SETUP)}>
+                                  <ModifiedCombobox
+                                    workouts={this.props.workouts}
+                                    currWorkout={this.props.currWorkout}
+                                    currWorkoutId={this.props.currWorkoutId}
+                                    updateName={this.props.updateName}
+                                    selectWorkout={this.props.selectWorkout} />
                                 </td>
                               </tr>
                             </tbody>

@@ -3,19 +3,15 @@
     text-align: left;
 }
 
-#editorInterface {
+#editorComponent #editorInterface {
     margin: 0 auto;
-}
-
-#nameField {
-    width: 65vw;
 }
 
 #editorComponent .number-field {
     max-width: 15vw;
 }
 
-#exerciseField {
+#editorComponent #exerciseField {
     /*max-width: 200px;*/
     width: 35vw;
 }

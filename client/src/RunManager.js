@@ -22,8 +22,7 @@ class RunManager extends Component {
       // Fix up for prefixing
       window.AudioContext = window.AudioContext||window.webkitAudioContext;
       context = new AudioContext();
-    }
-    catch(e) {
+    } catch(e) {
       this.props.addNotification('Web Audio API is not supported in this browser. Audio has been disabled. Try the latest versions of Chrome, Firefox, or Edge.', 'info', 5);
     }
     
@@ -92,8 +91,7 @@ class RunManager extends Component {
     return new Promise((resolve, reject) => {
       if (!context) {
         reject(new Error('audio web api unavailable. should not be attempting this'));
-      }
-      else if (Date.now() - this.apiTokenTime >= 9*60*1000) { // >= 9 min as ms
+      } else if (Date.now() - this.apiTokenTime >= 9*60*1000) { // >= 9 min as ms
         axios.request({
           url: 'https://westus.api.cognitive.microsoft.com/sts/v1.0/issueToken',
           method: 'post',
@@ -108,8 +106,7 @@ class RunManager extends Component {
           resolve();
         })
         .catch(error => reject(error));
-      }
-      else {
+      } else {
         console.log('cached api token');
         resolve();
       }
@@ -267,7 +264,6 @@ class RunManager extends Component {
 
   endBreak = () => {
     this.playAudioBufs([this.audioBufs.localSrc.breakSound, this.audioBufs.remoteSrc.sets[this.state.currSetIndex].reps]);
-    //this.apiTest(`Next set: ${this.props.workoutSets[this.state.currSetIndex].reps} ${this.props.exercise}`);
     this.setState((prevState) => ({
       isBreakTime: false
     }))

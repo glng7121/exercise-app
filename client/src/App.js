@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import Editor from './Editor.js';
 import RunManager from './RunManager.js';
-import WorkoutsManager from './WorkoutsManager.js';
 import { Time, storageAvailable, isEmptyObj } from './helpers.js';
 import './App.css';
 
@@ -51,7 +50,6 @@ class App extends Component {
       nextWorkoutId: 1, 
       workouts: new Map([[0, this.generateWorkout(0)]]),
       isRunning: false,
-      showWorkoutsManager: false
     }
     */
     /* stress testing
@@ -61,7 +59,6 @@ class App extends Component {
       nextWorkoutId: 1000,
       workouts: tonOfWorkouts,
       isRunning: false,
-      showWorkoutsManager: false
     }
     */
    
@@ -73,7 +70,6 @@ class App extends Component {
       nextWorkoutId: this.tryNextWorkoutIdFromStorage(),
       workouts: workouts, //tonOfWorkouts,
       isRunning: false,
-      showWorkoutsManager: false
     }
     
     this._notificationSystem = React.createRef();
@@ -241,8 +237,7 @@ class App extends Component {
     }
   }
 
-  selectWorkout = (event) => {
-    const key = Number(event.target.value);
+  selectWorkout = (key) => {
     if (!this.state.workouts.has(key)) return;
     const updatedWorkouts = this.updatedWorkouts(this.state.currWorkoutId, this.getDeepWorkoutClone(this.state.editableWorkout));
     this.setState({
@@ -288,10 +283,10 @@ Please fix and try again. Thanks!`);
     }
   }
 
-  updateWorkoutName = (event) => {
+  updateWorkoutName = (name) => {
     const workout = this.getDeepWorkoutClone(this.state.editableWorkout);
     if (!workout) return;
-    workout.name = event.target.value;
+    workout.name = name;
     this.setState({
       editableWorkout: workout
     }, () => this.saveInStorage(App.STORAGE_KEY_EDITABLE_WORKOUT, workout));
@@ -349,7 +344,7 @@ Please fix and try again. Thanks!`);
   }
 
   render() {
-    const { editableWorkout, workouts, currWorkoutId, isRunning, showWorkoutsManager } = this.state;
+    const { editableWorkout, workouts, currWorkoutId, isRunning } = this.state;
     const { sets, name, exercise, breakTime} = editableWorkout;
     return (
       <div id='appComponent'>
@@ -362,32 +357,24 @@ Please fix and try again. Thanks!`);
                                 breakTime={this.parseTime(breakTime)} 
                                 toggleRun={this.toggleRun} 
                                 addNotification={this._addNotification} /> :
-                    <div>
-                      <button onClick={() => this.setState((prevState) => ({showWorkoutsManager: !prevState.showWorkoutsManager}))}>
-                        {showWorkoutsManager? 'Collapse...' : 'Manage workouts...'}
-                      </button>
-                      {showWorkoutsManager? 
-                        <WorkoutsManager 
-                          currWorkoutId={currWorkoutId}
-                          currWorkout={editableWorkout}
-                          workouts={workouts}
-                          addEmptyWorkout={this.addEmptyWorkout} 
-                          deleteCurrWorkout={this.deleteCurrWorkout}
-                          selectWorkout={this.selectWorkout} /> 
-                        : null}
-                      <Editor key={currWorkoutId}
+                    <Editor key={currWorkoutId}
                             workoutSets={sets}
                             workoutName={name}
                             exercise={exercise}
                             breakTime={breakTime}
+                            workouts={workouts}
+                            currWorkoutId={currWorkoutId}
+                            currWorkout={editableWorkout}
                             updateName={this.updateWorkoutName}
                             updateExercise={this.updateWorkoutExercise}
                             updateBreakMin={this.updateWorkoutBreakTime_wrapper(App.ID_MIN)}
                             updateBreakSec={this.updateWorkoutBreakTime_wrapper(App.ID_SEC)}
                             updateSetInBase={this.updateSet} 
                             addEmptySetToBase={this.addEmptySet} 
-                            deleteSetFromBase={this.deleteSet} />
-                    </div> }
+                            deleteSetFromBase={this.deleteSet}
+                            addEmptyWorkout={this.addEmptyWorkout} 
+                            deleteCurrWorkout={this.deleteCurrWorkout}
+                            selectWorkout={this.selectWorkout} /> }
         <RunButton isRunning={isRunning}
                    toggleRun={this.toggleRun} />
         <NotificationSystem ref={this._notificationSystem} style={this.notifStyles} />
