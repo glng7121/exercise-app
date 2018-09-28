@@ -44,7 +44,10 @@ class ModifiedCombobox extends Component {
   render() {
     const workoutsArr = Array.from(this.props.workouts.entries()).map((pair) => {
       const workout = (pair[0] === this.props.currWorkoutId? this.props.currWorkout : pair[1]);
-      return workout;
+      return {
+        key: workout.key,
+        name: workout.name? workout.name : '(unnamed)',
+      };
     });
     return (
       <div id='ModifiedComboboxComponent'>

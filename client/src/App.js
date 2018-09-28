@@ -286,7 +286,7 @@ Please fix and try again. Thanks!`);
   updateWorkoutName = (name) => {
     const workout = this.getDeepWorkoutClone(this.state.editableWorkout);
     if (!workout) return;
-    workout.name = name;
+    workout.name = name? name : '(unnamed)';
     this.setState({
       editableWorkout: workout
     }, () => this.saveInStorage(App.STORAGE_KEY_EDITABLE_WORKOUT, workout));
