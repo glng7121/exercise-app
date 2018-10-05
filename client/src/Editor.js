@@ -114,104 +114,80 @@ class Editor extends Component {
       */
       return (
         <div id='editorComponent'>
-          <table id='editorInterface'>
-            <thead>
-              <tr className='button-menu'>
-                <th>
-                  <button onClick={this.props.addEmptyWorkout}> New </button> 
-                  <button onClick={this.props.deleteCurrWorkout}> Delete </button>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>
-                  <table className='workout-fields'>
-                    <tbody>
-                      <tr>
-                        <td>
-                          <table className='setup-fields'>
-                            <tbody>
-                              <tr>
-                                <td> Name: </td>
-                                <td ref={this.setupRefs[Editor.NAME_IND]} onKeyPress={this.handleNextField_wrapper(Editor.NAME_IND, Editor.FIELD_ID_SETUP)}>
-                                  <ModifiedCombobox
-                                    workouts={this.props.workouts}
-                                    currWorkout={this.props.currWorkout}
-                                    currWorkoutId={this.props.currWorkoutId}
-                                    updateName={this.props.updateName}
-                                    selectWorkout={this.props.selectWorkout} />
-                                </td>
-                              </tr>
-                            </tbody>
-                          </table>
-                          <table className='setup-fields'>
-                            <tbody>
-                              <tr>
-                                <td> Exercise: </td>
-                                <td> 
-                                    <input id='exerciseField' type='text' placeholder='e.g. pushups' value={this.props.exercise || ''} ref={this.setupRefs[Editor.EXER_IND]} 
-                                          onChange={this.props.updateExercise} 
-                                          onKeyPress={this.handleNextField_wrapper(Editor.EXER_IND, Editor.FIELD_ID_SETUP)} />
-                                </td>
-                              </tr>
-                              <tr>
-                                <td> Break time: </td>
-                                <td> 
-                                  <input className='number-field' type='number' placeholder='min' value={this.props.breakTime.min || ''} ref={this.setupRefs[Editor.BREAK_MIN_IND]} 
-                                        onChange={this.props.updateBreakMin} 
-                                        onKeyPress={this.handleNextField_wrapper(Editor.BREAK_MIN_IND, Editor.FIELD_ID_SETUP)} />:
-                                  <input className='number-field' type='number' placeholder='sec' value={this.props.breakTime.sec || ''} ref={this.setupRefs[Editor.BREAK_SEC_IND]} 
-                                        onChange={this.props.updateBreakSec} 
-                                        onKeyPress={this.handleNextField_wrapper(Editor.BREAK_SEC_IND, Editor.FIELD_ID_SETUP)} />
-                                </td>
-                              </tr>
-                            </tbody>
-                          </table>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>
-                          <table className='set-fields'>
-                              <thead>
-                                <tr>
-                                  <th colSpan='4'> Sets </th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                
-                              {this.props.workoutSets.map((set, i) => 
-                                  <tr key={set.key}>
-                                    <td> {`${i+1})`} </td>
-                                    <td>
-                                        <input className='number-field' type='number' placeholder='#' value={set.reps.toString()}
-                                            ref={this.state.setRefs[i]}
-                                            onChange={this.updateSet_wrapper(i)} 
-                                            onKeyPress={this.handleNextField_wrapper(i, Editor.FIELD_ID_SET)} />
-                                    </td>
-                                    <td>
-                                        <button className='set-button' onClick={this.handleDeleteSet_wrapper(i)}
-                                                disabled={i === 0 && this.props.workoutSets.length === 1? true : false}> 
-                                        Delete 
-                                        </button>
-                                    </td>
-                                    <td>
-                                        <button className='set-button' onClick={this.addEmptySet_wrapper(i+1)}> 
-                                        Insert After 
-                                        </button>
-                                    </td>
-                                  </tr>
-                              )}
-                              </tbody>
-                          </table>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </td>
-              </tr>
-            </tbody>
+          <div id='editorInterface'>
+            <div className='button-menu'>
+              <button onClick={this.props.addEmptyWorkout}> New </button> 
+              <button onClick={this.props.deleteCurrWorkout}> Delete </button>
+            </div>
+            <div className='label name-param param'> Name: </div>
+            <div className='field name-param param' ref={this.setupRefs[Editor.NAME_IND]} onKeyPress={this.handleNextField_wrapper(Editor.NAME_IND, Editor.FIELD_ID_SETUP)}>
+                  <ModifiedCombobox
+                    workouts={this.props.workouts}
+                    currWorkout={this.props.currWorkout}
+                    currWorkoutId={this.props.currWorkoutId}
+                    updateName={this.props.updateName}
+                    selectWorkout={this.props.selectWorkout} />
+            </div>
+            <div className='label exer-param param'> Exercise: </div>
+            <input id='exerciseField' 
+              className='field exer-param param' 
+              type='text' 
+              placeholder='e.g. pushups'
+              value={this.props.exercise || ''} 
+              ref={this.setupRefs[Editor.EXER_IND]}                           
+              onChange={this.props.updateExercise}                               
+              onKeyPress={this.handleNextField_wrapper(Editor.EXER_IND, Editor.FIELD_ID_SETUP)} />
+            <div className='label break-param param'> Break time: </div>
+            <div className='field break-param param'>
+              <input 
+                className='number-field' 
+                type='number' 
+                placeholder='min' 
+                value={this.props.breakTime.min || ''} 
+                ref={this.setupRefs[Editor.BREAK_MIN_IND]} 
+                onChange={this.props.updateBreakMin} 
+                onKeyPress={this.handleNextField_wrapper(Editor.BREAK_MIN_IND, Editor.FIELD_ID_SETUP)} />:
+              <input 
+                className='number-field' 
+                type='number' 
+                placeholder='sec' 
+                value={this.props.breakTime.sec || ''} 
+                ref={this.setupRefs[Editor.BREAK_SEC_IND]} 
+                onChange={this.props.updateBreakSec} 
+                onKeyPress={this.handleNextField_wrapper(Editor.BREAK_SEC_IND, Editor.FIELD_ID_SETUP)} />
+            </div>
+            <table className='set-fields'>
+              <thead>
+                <tr>
+                  <th colSpan='4'> Sets </th>
+                </tr>
+              </thead>
+              <tbody>
+                {this.props.workoutSets.map((set, i) => 
+                  <tr key={set.key}>
+                    <td> {`${i+1})`} </td>
+                    <td>
+                        <input className='number-field' type='number' placeholder='#' value={set.reps.toString()}
+                            ref={this.state.setRefs[i]}
+                            onChange={this.updateSet_wrapper(i)} 
+                            onKeyPress={this.handleNextField_wrapper(i, Editor.FIELD_ID_SET)} />
+                    </td>
+                    <td>
+                        <button className='set-button' onClick={this.handleDeleteSet_wrapper(i)}
+                                disabled={i === 0 && this.props.workoutSets.length === 1? true : false}> 
+                        Delete 
+                        </button>
+                    </td>
+                    <td>
+                        <button className='set-button' onClick={this.addEmptySet_wrapper(i+1)}> 
+                        Insert After 
+                        </button>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
           </table>
+          </div>
         </div>
       );
     }

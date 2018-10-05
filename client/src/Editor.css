@@ -1,17 +1,59 @@
 #editorComponent {
-    margin: 5vw 0;
+    margin: 0 auto;
+    max-width: 40ch;
     text-align: left;
 }
 
 #editorComponent #editorInterface {
+    display: grid;
+    grid-gap: 1ch;
+    padding: 2ch;
     margin: 0 auto;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    grid-template-rows: 1fr 1fr 1fr 1fr auto;
+    border: 1px solid black;
+    border-radius: 5px;
+    box-shadow: 1px 1px;
+}
+
+#editorComponent .button-menu {
+    grid-row: 1 / 2;
+    grid-column: 1 / 5;
+}
+
+#editorComponent .param {
+    margin: auto 0;
+}
+
+#editorComponent .name-param {
+    grid-row: 2 / 3;
+}
+
+#editorComponent .exer-param {
+    grid-row: 3 / 4;
+}
+
+#editorComponent .break-param {
+    grid-row: 4 / 5;
+    display: flex;
+}
+
+#editorInterface .label {
+    grid-column: 1 / 2;
+}
+
+#editorInterface .field {
+    grid-column: 2 / 5;
+    width: 100%;
 }
 
 #editorComponent .number-field {
-    max-width: 15vw;
+    max-width: 5ch;
 }
 
-#editorComponent #exerciseField {
-    /*max-width: 200px;*/
-    width: 35vw;
+#editorComponent .set-fields {
+    padding: 2ch;
+    grid-row: 5 / 6;
+    grid-column: 1 / 5;
 }
+

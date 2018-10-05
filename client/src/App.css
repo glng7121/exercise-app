@@ -32,14 +32,14 @@ input, select, textarea, button {
 }
 
 #appComponent {
-  margin: 3vw;
-  font-size: 6vw;
+  margin: 1ch;
+  font-size: 1ch;
   text-align: center;
 }
 
 #toggleRunBtn {
-  font-size: 8vw;
-  padding: 5vw;
+  font-size: 2em;
+  padding: 1ch;
   box-shadow: 1px 1px;
   border-radius: 3px 3px;
   background-color: green;
