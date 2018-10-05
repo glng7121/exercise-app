@@ -1,5 +1,5 @@
 #editorComponent {
-    margin: 0 auto;
+    margin: 3ch auto;
     max-width: 40ch;
     text-align: left;
 }
@@ -56,4 +56,9 @@
     grid-row: 5 / 6;
     grid-column: 1 / 5;
 }
+
+#editorComponent .set-fields th {
+    text-align: center;
+}
+
 

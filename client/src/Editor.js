@@ -103,15 +103,6 @@ class Editor extends Component {
     }
 
     render () {
-      const workouts = Array.from(this.props.workouts.entries()).map((pair) => {
-        const workout = (pair[0] === this.props.currWorkoutId? this.props.currWorkout : pair[1]);
-        return workout;
-      });
-      /*
-                                        <input id='nameField' type='text' placeholder='Workout name' value={this.props.workoutName || ''} ref={this.setupRefs[Editor.NAME_IND]}
-                                        onChange={this.updateName}
-                                        onKeyPress={this.handleNextField_wrapper(Editor.NAME_IND, Editor.FIELD_ID_SETUP)} />
-      */
       return (
         <div id='editorComponent'>
           <div id='editorInterface'>
