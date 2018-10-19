@@ -2,7 +2,9 @@ A simple React exercise app for editing and running workouts where each set is o
 
 The app should be intuitive enough to use without reading the instructions below.
 
-Try out the app here: https://sleepy-reef-41418.herokuapp.com/
+Try out the app here: 
+  * Stable: https://infinite-lowlands-89329.herokuapp.com
+  * Developmental: https://sleepy-reef-41418.herokuapp.com
 
 
 Instructions:
